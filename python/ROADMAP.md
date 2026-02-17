@@ -196,10 +196,15 @@ This section is the canonical setup guide for contributors working on the Python
 - [x] Implement manual flagging page
 - [x] Implement graph export page
 - [x] Implement log/diagnostics page
+- [x] Wire Start page to real parser/file loading into in-memory dataset state
+- [x] Drive preview table/plots from parsed dataset state
+- [x] Drive spike/manual QC actions from in-memory dataset state
 
 ## Phase 8 - Tests and validation
 - [ ] Add pytest scaffolding and fixtures
 - [x] Add parser format test matrix
+- [x] Add UI state mutation tests (spike/manual/manual file parsing)
+- [x] Add UI callback wiring regression check for manual flag path
 - [ ] Port representative parser tests
 - [ ] Port preprocessing/QC tests
 - [ ] Add NetCDF regression tests
@@ -209,3 +214,10 @@ This section is the canonical setup guide for contributors working on the Python
 - [ ] Add user and developer docs
 - [ ] Add migration notes from MATLAB
 - [ ] Publish first alpha release to PyPI
+
+## Bookend update (2026-02-17)
+- [x] Verified local Dash UI launch with optional `ui` dependencies.
+- [x] Verified parser-to-UI dataset load path with a Vemco sample file.
+- [x] Verified end-to-end manual flagging state mutation path (`dataset-store` updates QC flags).
+- [x] Added regression coverage for manual-flag callback wiring.
+- [ ] Next session: wire export flow from in-memory QC state to file outputs.

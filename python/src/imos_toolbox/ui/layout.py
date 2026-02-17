@@ -4,12 +4,15 @@ from __future__ import annotations
 
 from dash import dash_table, dcc, html
 
+from imos_toolbox.ui.data import parser_options
+
 
 def build_layout() -> html.Div:
     return html.Div(
         [
             html.H2("IMOS Toolbox - Dash UI (MVP)"),
             dcc.Store(id="ui-config-store"),
+            dcc.Store(id="dataset-store"),
             dcc.Tabs(
                 id="ui-tabs",
                 value="start",
@@ -50,8 +53,24 @@ def start_page() -> html.Div:
             dcc.Input(id="start-field-trip", type="text", value="", style={"width": "100%"}),
             html.Label("DDB Connection"),
             dcc.Input(id="start-ddb", type="text", value="", style={"width": "100%"}),
+            html.Hr(),
+            html.Label("Parser"),
+            dcc.Dropdown(
+                id="start-parser",
+                options=parser_options(),
+                value="sbe37",
+                clearable=False,
+            ),
+            html.Label("Input File(s)"),
+            dcc.Textarea(
+                id="start-files",
+                value="",
+                placeholder="Absolute file paths, comma or newline separated",
+                style={"width": "100%", "height": 100},
+            ),
             html.Br(),
             html.Button("Apply Configuration", id="start-apply", n_clicks=0),
+            html.Button("Load Dataset", id="start-load", n_clicks=0, style={"marginLeft": "0.5rem"}),
             html.Div(id="start-status", style={"marginTop": "0.5rem"}),
         ]
     )
@@ -62,14 +81,11 @@ def dataset_preview_page() -> html.Div:
         [
             html.H3("Dataset Preview"),
             html.P("Data exploration view with summary and sample rows."),
+            dcc.Dropdown(id="preview-variable", options=[], value=None, clearable=False),
             dcc.Graph(id="preview-graph"),
-            dash_table.DataTable(
+            dash_table.DataTable(  # type: ignore[attr-defined]
                 id="preview-table",
-                columns=[
-                    {"name": "TIME", "id": "TIME"},
-                    {"name": "TEMP", "id": "TEMP"},
-                    {"name": "PRES", "id": "PRES"},
-                ],
+                columns=[],
                 data=[],
                 page_size=10,
             ),
@@ -81,7 +97,7 @@ def metadata_editor_page() -> html.Div:
     return html.Div(
         [
             html.H3("Metadata Editor"),
-            dash_table.DataTable(
+            dash_table.DataTable(  # type: ignore[attr-defined]
                 id="metadata-table",
                 columns=[
                     {"name": "key", "id": "key", "editable": False},
@@ -94,6 +110,7 @@ def metadata_editor_page() -> html.Div:
                 ],
                 editable=True,
             ),
+            html.Div(id="metadata-dataset-summary", style={"marginTop": "0.5rem"}),
         ]
     )
 
@@ -113,10 +130,12 @@ def spike_selection_page() -> html.Div:
         [
             html.H3("Spike Selection"),
             html.P("QC interaction view for spike review and candidate flagging."),
+            dcc.Dropdown(id="spike-variable", options=[], value=None, clearable=False),
             dcc.Graph(id="spike-graph"),
             html.Label("Threshold"),
             dcc.Slider(id="spike-threshold", min=0.0, max=10.0, step=0.1, value=3.0),
             html.Button("Mark Selected Spikes", id="spike-mark", n_clicks=0),
+            html.Div(id="spike-status", style={"marginTop": "0.5rem"}),
         ]
     )
 
@@ -125,7 +144,8 @@ def manual_flagging_page() -> html.Div:
     return html.Div(
         [
             html.H3("Manual Flagging"),
-            html.P("QC interaction view for manual point/segment flagging."),
+            html.P("QC interaction view for manual point/segment flagging. Use box/lasso selection on the plot."),
+            dcc.Dropdown(id="manual-variable", options=[], value=None, clearable=False),
             dcc.Graph(id="manual-flag-graph"),
             dcc.Dropdown(
                 id="manual-flag-code",
@@ -139,6 +159,7 @@ def manual_flagging_page() -> html.Div:
                 clearable=False,
             ),
             html.Button("Apply Manual Flag", id="manual-flag-apply", n_clicks=0),
+            html.Div(id="manual-status", style={"marginTop": "0.5rem"}),
         ]
     )
 

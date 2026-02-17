@@ -4,8 +4,9 @@ This directory contains the early-stage Python port of the IMOS Toolbox.
 
 ## Status
 
-- Core scaffolding only.
-- Parsers, preprocessing, QC, NetCDF export, and UI are not yet implemented.
+- Core scaffold plus substantial parser tranche implemented (see `parse-*` commands below).
+- Dash UI scaffold is wired to real parser outputs for dataset preview and in-memory QC interactions.
+- Preprocessing, full automatic QC chain, NetCDF export pipeline, and production workflow wiring remain in progress.
 
 ## Development
 
@@ -28,6 +29,23 @@ uv run mypy src
 # Run Dash UI scaffold (install optional UI deps first)
 uv sync --extra ui --extra dev
 uv run imos-toolbox ui --host 127.0.0.1 --port 8050
+
+# Quick local UI verification example (Vemco parser)
+cat > /tmp/vemco_ui_sample.csv << 'EOF'
+Source Device: Minilog-12345
+Study Start Time: 2024-01-01 00:00:00
+Study Stop Time: 2024-01-01 00:04:00
+Sample Interval: 00:01:00
+Date,Time,Temperature (°C)
+2024-01-01,00:00:00,20.0
+2024-01-01,00:01:00,20.2
+2024-01-01,00:02:00,20.4
+2024-01-01,00:03:00,20.1
+2024-01-01,00:04:00,20.3
+EOF
+
+# In UI Start tab: parser=vemco, input file=/tmp/vemco_ui_sample.csv, then click "Load Dataset"
+# In Manual Flagging tab: select points with box/lasso and click "Apply Manual Flag"
 
 # Resolve parser mapping from existing instruments table
 uv run imos-toolbox parser-map --make "SEABIRD" --model "SBE19plus V2" --repo-root ..
