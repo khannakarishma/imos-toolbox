@@ -39,3 +39,6 @@ imos-toolbox = "imos_toolbox.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/imos_toolbox"]
+
+[tool.mypy]
+ignore_missing_imports = true

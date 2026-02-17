@@ -22,9 +22,10 @@ def load_qc_flags(path: str | Path) -> List[Dict[str, object]]:
         if len(row) < 5:
             continue
         qc_id = int(row[0].strip())
-        flag_value = row[1].strip()
+        raw_flag_value = row[1].strip()
+        flag_value: object = raw_flag_value
         try:
-            flag_value = int(flag_value)
+            flag_value = int(raw_flag_value)
         except ValueError:
             pass
         description = row[2].strip()
