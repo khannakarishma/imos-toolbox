@@ -12,6 +12,7 @@ from imos_toolbox.parsers import (
     ECOBB9Parser,
     ECOTripletParser,
     ParserRegistry,
+    NIWAParser,
     SBE19Parser,
     SBE26Parser,
     SBE37Parser,
@@ -58,6 +59,7 @@ def parser_map_cmd(make: str, model: str, repo_root: Path) -> None:
             ECOTripletParser,
             ECOBB9Parser,
             DR1050Parser,
+            NIWAParser,
             VemcoParser,
             WQMParser,
             XRParser,
@@ -245,6 +247,20 @@ def parse_xr_cmd(file_path: Path, mode: str) -> None:
 def parse_vemco_cmd(file_path: Path, mode: str) -> None:
     """Parse one Vemco Logger Vue CSV export and print summary."""
     parser = VemcoParser()
+    dataset = parser.parse([file_path], mode)
+    xds = dataset.to_xarray()
+
+    click.echo(f"file={file_path}")
+    click.echo(f"variables={len(xds.data_vars)}")
+    click.echo(f"dimensions={dict(xds.dims)}")
+
+
+@main.command("parse-niwa")
+@click.option("--file", "file_path", required=True, type=click.Path(path_type=Path, exists=True))
+@click.option("--mode", default="timeSeries", show_default=True)
+def parse_niwa_cmd(file_path: Path, mode: str) -> None:
+    """Parse one NIWA .DAT3 ASCII file and print summary."""
+    parser = NIWAParser()
     dataset = parser.parse([file_path], mode)
     xds = dataset.to_xarray()
 

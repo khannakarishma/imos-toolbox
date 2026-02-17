@@ -72,7 +72,7 @@ This section is the canonical setup guide for contributors working on the Python
 - [x] Implement XR parser
 - [x] Implement DR1050 parser
 - [x] Implement Vemco parser
-- [ ] Implement NIWA parser
+- [x] Implement NIWA parser
 - [ ] Implement NXIC binary parser
 - [ ] Implement Starmon Mini parser
 - [ ] Implement Starmon DST parser
@@ -199,6 +199,7 @@ This section is the canonical setup guide for contributors working on the Python
 
 ## Phase 8 - Tests and validation
 - [ ] Add pytest scaffolding and fixtures
+- [x] Add parser format test matrix
 - [ ] Port representative parser tests
 - [ ] Port preprocessing/QC tests
 - [ ] Add NetCDF regression tests

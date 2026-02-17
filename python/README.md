@@ -66,7 +66,12 @@ uv run imos-toolbox parse-xr --file /path/to/file.dat --mode timeSeries
 
 # Parse one Vemco Logger Vue CSV export (initial support)
 uv run imos-toolbox parse-vemco --file /path/to/file.csv --mode timeSeries
+
+# Parse one NIWA DAT3 ASCII export (initial support)
+uv run imos-toolbox parse-niwa --file /path/to/file.DAT3 --mode timeSeries
 ```
+
+Parser format coverage is tracked in [PARSER_FORMAT_MATRIX.md](PARSER_FORMAT_MATRIX.md).
 
 ## Command Shortcuts
 
