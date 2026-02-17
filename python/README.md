@@ -25,6 +25,10 @@ uv run pytest -v
 uv run ruff check src tests
 uv run mypy src
 
+# Run Dash UI scaffold (install optional UI deps first)
+uv sync --extra ui --extra dev
+uv run imos-toolbox ui --host 127.0.0.1 --port 8050
+
 # Resolve parser mapping from existing instruments table
 uv run imos-toolbox parser-map --make "SEABIRD" --model "SBE19plus V2" --repo-root ..
 

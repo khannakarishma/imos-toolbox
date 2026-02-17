@@ -183,19 +183,19 @@ This section is the canonical setup guide for contributors working on the Python
 - [ ] Add CLI options for log/diagnostic output
 
 ## Phase 7 - Dash web UI
-- [ ] Scaffold Dash app and layout
-- [ ] Implement data exploration views
-- [ ] Implement QC interaction views (spike selection, manual flagging)
-- [ ] Implement export flow
-- [ ] Add plot exports
-- [ ] Implement start page (mode, data dir, field trip, DDB)
-- [ ] Implement dataset preview page
-- [ ] Implement metadata editor page
-- [ ] Implement QC summary/stats page
-- [ ] Implement spike selection page
-- [ ] Implement manual flagging page
-- [ ] Implement graph export page
-- [ ] Implement log/diagnostics page
+- [x] Scaffold Dash app and layout
+- [x] Implement data exploration views
+- [x] Implement QC interaction views (spike selection, manual flagging)
+- [x] Implement export flow
+- [x] Add plot exports
+- [x] Implement start page (mode, data dir, field trip, DDB)
+- [x] Implement dataset preview page
+- [x] Implement metadata editor page
+- [x] Implement QC summary/stats page
+- [x] Implement spike selection page
+- [x] Implement manual flagging page
+- [x] Implement graph export page
+- [x] Implement log/diagnostics page
 
 ## Phase 8 - Tests and validation
 - [ ] Add pytest scaffolding and fixtures

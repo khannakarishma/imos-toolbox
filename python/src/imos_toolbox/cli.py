@@ -37,6 +37,23 @@ def main() -> None:
     """IMOS Toolbox CLI."""
 
 
+@main.command("ui")
+@click.option("--host", default="127.0.0.1", show_default=True)
+@click.option("--port", default=8050, show_default=True, type=int)
+@click.option("--debug/--no-debug", default=False, show_default=True)
+def ui_cmd(host: str, port: int, debug: bool) -> None:
+    """Run the Dash UI scaffold."""
+    try:
+        from imos_toolbox.ui import build_app
+    except ImportError as exc:
+        raise click.ClickException(
+            "UI dependencies are not installed. Install with: uv sync --extra ui --extra dev"
+        ) from exc
+
+    app = build_app()
+    app.run(host=host, port=port, debug=debug)
+
+
 @main.command("info")
 def info_cmd() -> None:
     """Show basic package info."""
