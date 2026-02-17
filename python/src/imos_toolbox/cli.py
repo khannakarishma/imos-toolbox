@@ -8,6 +8,8 @@ import click
 
 from imos_toolbox.config import resolve_repo_root
 from imos_toolbox.parsers import (
+    ECOBB9Parser,
+    ECOTripletParser,
     ParserRegistry,
     SBE19Parser,
     SBE26Parser,
@@ -15,6 +17,7 @@ from imos_toolbox.parsers import (
     SBE37SMParser,
     SBE39Parser,
     SBE56Parser,
+    WetStarParser,
     WQMParser,
 )
 
@@ -48,6 +51,9 @@ def parser_map_cmd(make: str, model: str, repo_root: Path) -> None:
             SBE37SMParser,
             SBE39Parser,
             SBE56Parser,
+            WetStarParser,
+            ECOTripletParser,
+            ECOBB9Parser,
             WQMParser,
         ]
     )
@@ -149,6 +155,48 @@ def parse_sbe56_cmd(file_path: Path, mode: str) -> None:
 def parse_wqm_cmd(file_path: Path, mode: str) -> None:
     """Parse one WQM .dat/.raw file and print summary."""
     parser = WQMParser()
+    dataset = parser.parse([file_path], mode)
+    xds = dataset.to_xarray()
+
+    click.echo(f"file={file_path}")
+    click.echo(f"variables={len(xds.data_vars)}")
+    click.echo(f"dimensions={dict(xds.dims)}")
+
+
+@main.command("parse-wetstar")
+@click.option("--file", "file_path", required=True, type=click.Path(path_type=Path, exists=True))
+@click.option("--mode", default="timeSeries", show_default=True)
+def parse_wetstar_cmd(file_path: Path, mode: str) -> None:
+    """Parse one WetStar .raw file (+ matching .dev) and print summary."""
+    parser = WetStarParser()
+    dataset = parser.parse([file_path], mode)
+    xds = dataset.to_xarray()
+
+    click.echo(f"file={file_path}")
+    click.echo(f"variables={len(xds.data_vars)}")
+    click.echo(f"dimensions={dict(xds.dims)}")
+
+
+@main.command("parse-ecotriplet")
+@click.option("--file", "file_path", required=True, type=click.Path(path_type=Path, exists=True))
+@click.option("--mode", default="timeSeries", show_default=True)
+def parse_ecotriplet_cmd(file_path: Path, mode: str) -> None:
+    """Parse one ECOTriplet .raw file (+ matching .dev) and print summary."""
+    parser = ECOTripletParser()
+    dataset = parser.parse([file_path], mode)
+    xds = dataset.to_xarray()
+
+    click.echo(f"file={file_path}")
+    click.echo(f"variables={len(xds.data_vars)}")
+    click.echo(f"dimensions={dict(xds.dims)}")
+
+
+@main.command("parse-ecobb9")
+@click.option("--file", "file_path", required=True, type=click.Path(path_type=Path, exists=True))
+@click.option("--mode", default="timeSeries", show_default=True)
+def parse_ecobb9_cmd(file_path: Path, mode: str) -> None:
+    """Parse one ECOBB9 .raw file (+ matching .dev) and print summary."""
+    parser = ECOBB9Parser()
     dataset = parser.parse([file_path], mode)
     xds = dataset.to_xarray()
 

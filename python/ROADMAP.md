@@ -66,9 +66,9 @@ This section is the canonical setup guide for contributors working on the Python
 - [ ] Implement Signature/AD2CP parser
 - [ ] Implement OceanContour parser
 - [x] Implement WQM parser
-- [ ] Implement WetStar parser
-- [ ] Implement ECOBB9 parser
-- [ ] Implement ECO Triplet parser
+- [x] Implement WetStar parser
+- [x] Implement ECOBB9 parser
+- [x] Implement ECO Triplet parser
 - [ ] Implement XR parser
 - [ ] Implement DR1050 parser
 - [ ] Implement Vemco parser

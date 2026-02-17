@@ -48,6 +48,15 @@ uv run imos-toolbox parse-sbe56 --file /path/to/file.csv --mode timeSeries
 
 # Parse one WQM .dat/.raw file (initial support)
 uv run imos-toolbox parse-wqm --file /path/to/file.dat --mode timeSeries
+
+# Parse one WetStar .raw file (+ matching .dev)
+uv run imos-toolbox parse-wetstar --file /path/to/file.raw --mode timeSeries
+
+# Parse one ECOTriplet .raw file (+ matching .dev)
+uv run imos-toolbox parse-ecotriplet --file /path/to/file.raw --mode timeSeries
+
+# Parse one ECOBB9 .raw file (+ matching .dev)
+uv run imos-toolbox parse-ecobb9 --file /path/to/file.raw --mode timeSeries
 ```
 
 ## Command Shortcuts
