@@ -14,6 +14,7 @@ from imos_toolbox.parsers import (
     ECOTripletParser,
     ParserRegistry,
     NIWAParser,
+    RCMParser,
     SBE19Parser,
     SBE26Parser,
     SBE37Parser,
@@ -68,6 +69,7 @@ def parser_map_cmd(make: str, model: str, repo_root: Path) -> None:
             ECOBB9Parser,
             DR1050Parser,
             NIWAParser,
+            RCMParser,
             VemcoParser,
             WQMParser,
             XRParser,
@@ -325,6 +327,20 @@ def parse_starmon_dst_cmd(file_path: Path, mode: str) -> None:
 def parse_aquatec_cmd(file_path: Path, mode: str) -> None:
     """Parse one Aquatec Aqualogger export file and print summary."""
     parser = AquatecParser()
+    dataset = parser.parse([file_path], mode)
+    xds = dataset.to_xarray()
+
+    click.echo(f"file={file_path}")
+    click.echo(f"variables={len(xds.data_vars)}")
+    click.echo(f"dimensions={dict(xds.dims)}")
+
+
+@main.command("parse-rcm")
+@click.option("--file", "file_path", required=True, type=click.Path(path_type=Path, exists=True))
+@click.option("--mode", default="timeSeries", show_default=True)
+def parse_rcm_cmd(file_path: Path, mode: str) -> None:
+    """Parse one Aanderaa RCM text export and print summary."""
+    parser = RCMParser()
     dataset = parser.parse([file_path], mode)
     xds = dataset.to_xarray()
 
