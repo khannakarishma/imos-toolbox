@@ -69,6 +69,9 @@ uv run imos-toolbox parse-vemco --file /path/to/file.csv --mode timeSeries
 
 # Parse one NIWA DAT3 ASCII export (initial support)
 uv run imos-toolbox parse-niwa --file /path/to/file.DAT3 --mode timeSeries
+
+# Parse one ReefNet Sensus Ultra CSV export (initial support)
+uv run imos-toolbox parse-sensus-ultra --file /path/to/file.csv --mode timeSeries
 ```
 
 Parser format coverage is tracked in [PARSER_FORMAT_MATRIX.md](PARSER_FORMAT_MATRIX.md).

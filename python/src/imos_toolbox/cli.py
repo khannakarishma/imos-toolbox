@@ -19,6 +19,7 @@ from imos_toolbox.parsers import (
     SBE37SMParser,
     SBE39Parser,
     SBE56Parser,
+    SensusUltraParser,
     VemcoParser,
     WetStarParser,
     WQMParser,
@@ -55,6 +56,7 @@ def parser_map_cmd(make: str, model: str, repo_root: Path) -> None:
             SBE37SMParser,
             SBE39Parser,
             SBE56Parser,
+            SensusUltraParser,
             WetStarParser,
             ECOTripletParser,
             ECOBB9Parser,
@@ -261,6 +263,20 @@ def parse_vemco_cmd(file_path: Path, mode: str) -> None:
 def parse_niwa_cmd(file_path: Path, mode: str) -> None:
     """Parse one NIWA .DAT3 ASCII file and print summary."""
     parser = NIWAParser()
+    dataset = parser.parse([file_path], mode)
+    xds = dataset.to_xarray()
+
+    click.echo(f"file={file_path}")
+    click.echo(f"variables={len(xds.data_vars)}")
+    click.echo(f"dimensions={dict(xds.dims)}")
+
+
+@main.command("parse-sensus-ultra")
+@click.option("--file", "file_path", required=True, type=click.Path(path_type=Path, exists=True))
+@click.option("--mode", default="timeSeries", show_default=True)
+def parse_sensus_ultra_cmd(file_path: Path, mode: str) -> None:
+    """Parse one ReefNet Sensus Ultra CSV file and print summary."""
+    parser = SensusUltraParser()
     dataset = parser.parse([file_path], mode)
     xds = dataset.to_xarray()
 

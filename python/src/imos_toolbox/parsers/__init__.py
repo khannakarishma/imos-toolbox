@@ -12,6 +12,7 @@ from imos_toolbox.parsers.sbe37 import SBE37Parser
 from imos_toolbox.parsers.sbe37sm import SBE37SMParser
 from imos_toolbox.parsers.sbe39 import SBE39Parser
 from imos_toolbox.parsers.sbe56 import SBE56Parser
+from imos_toolbox.parsers.sensus_ultra import SensusUltraParser
 from imos_toolbox.parsers.vemco import VemcoParser
 from imos_toolbox.parsers.wetstar import WetStarParser
 from imos_toolbox.parsers.wqm import WQMParser
@@ -30,6 +31,7 @@ __all__ = [
 	"SBE37SMParser",
 	"SBE39Parser",
 	"SBE56Parser",
+	"SensusUltraParser",
 	"VemcoParser",
 	"WetStarParser",
 	"WQMParser",

@@ -19,6 +19,7 @@ This matrix tracks parser-to-format coverage in the Python port and is backed by
 | XR | `parse-xr` | classic `.dat` and Ruskin text exports |
 | Vemco | `parse-vemco` | `.csv` |
 | NIWA | `parse-niwa` | `.DAT3` ASCII |
+| Sensus Ultra | `parse-sensus-ultra` | `.csv` |
 
 ## Notes
 - Current tests validate command registration and extension-gating behavior for

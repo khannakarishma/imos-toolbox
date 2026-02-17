@@ -77,7 +77,7 @@ This section is the canonical setup guide for contributors working on the Python
 - [ ] Implement Starmon Mini parser
 - [ ] Implement Starmon DST parser
 - [ ] Implement Aquatec parser
-- [ ] Implement Sensus Ultra parser
+- [x] Implement Sensus Ultra parser
 - [ ] Implement Echoview parser
 - [ ] Implement Infinity SD Logger parser
 - [ ] Implement RCM parser
