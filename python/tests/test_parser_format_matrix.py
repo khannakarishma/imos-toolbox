@@ -22,6 +22,7 @@ from imos_toolbox.parsers import (
     VemcoParser,
     WetStarParser,
     WQMParser,
+    YSI6SeriesParser,
 )
 
 
@@ -45,6 +46,7 @@ from imos_toolbox.parsers import (
         (SensusUltraParser, [".csv"]),
         (StarmonMiniParser, [".dat"]),
         (StarmonDSTParser, [".dat"]),
+        (YSI6SeriesParser, [".dat"]),
     ],
 )
 def test_parser_rejects_unsupported_extensions(
@@ -85,6 +87,7 @@ def test_parser_rejects_unsupported_extensions(
         ("parse-sensus-ultra",),
         ("parse-starmon-mini",),
         ("parse-starmon-dst",),
+        ("parse-ysi6",),
     ],
 )
 def test_parser_commands_exist(command_name: str) -> None:

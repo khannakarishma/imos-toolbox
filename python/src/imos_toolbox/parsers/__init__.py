@@ -21,6 +21,7 @@ from imos_toolbox.parsers.vemco import VemcoParser
 from imos_toolbox.parsers.wetstar import WetStarParser
 from imos_toolbox.parsers.wqm import WQMParser
 from imos_toolbox.parsers.xr import XRParser
+from imos_toolbox.parsers.ysi6series import YSI6SeriesParser
 
 __all__ = [
 	"BaseParser",
@@ -44,5 +45,6 @@ __all__ = [
 	"WetStarParser",
 	"WQMParser",
 	"XRParser",
+	"YSI6SeriesParser",
 	"load_instrument_parser_map",
 ]

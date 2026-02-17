@@ -28,6 +28,7 @@ from imos_toolbox.parsers import (
     WetStarParser,
     WQMParser,
     XRParser,
+    YSI6SeriesParser,
 )
 
 
@@ -73,6 +74,7 @@ def parser_map_cmd(make: str, model: str, repo_root: Path) -> None:
             VemcoParser,
             WQMParser,
             XRParser,
+            YSI6SeriesParser,
         ]
     )
     registry.load_instruments(instruments_file)
@@ -341,6 +343,20 @@ def parse_aquatec_cmd(file_path: Path, mode: str) -> None:
 def parse_rcm_cmd(file_path: Path, mode: str) -> None:
     """Parse one Aanderaa RCM text export and print summary."""
     parser = RCMParser()
+    dataset = parser.parse([file_path], mode)
+    xds = dataset.to_xarray()
+
+    click.echo(f"file={file_path}")
+    click.echo(f"variables={len(xds.data_vars)}")
+    click.echo(f"dimensions={dict(xds.dims)}")
+
+
+@main.command("parse-ysi6")
+@click.option("--file", "file_path", required=True, type=click.Path(path_type=Path, exists=True))
+@click.option("--mode", default="timeSeries", show_default=True)
+def parse_ysi6_cmd(file_path: Path, mode: str) -> None:
+    """Parse one YSI 6-Series binary DAT file and print summary."""
+    parser = YSI6SeriesParser()
     dataset = parser.parse([file_path], mode)
     xds = dataset.to_xarray()
 

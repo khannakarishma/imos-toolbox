@@ -23,6 +23,7 @@ This matrix tracks parser-to-format coverage in the Python port and is backed by
 | RCM | `parse-rcm` | `.txt` |
 | Starmon Mini | `parse-starmon-mini` | `.dat` |
 | Starmon DST | `parse-starmon-dst` | `.dat` |
+| YSI 6-Series | `parse-ysi6` | `.dat` (binary) |
 | Sensus Ultra | `parse-sensus-ultra` | `.csv` |
 
 ## Notes

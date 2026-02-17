@@ -82,6 +82,9 @@ uv run imos-toolbox parse-aquatec --file /path/to/file.txt --mode timeSeries
 # Parse one Aanderaa RCM text export (initial support)
 uv run imos-toolbox parse-rcm --file /path/to/file.txt --mode timeSeries
 
+# Parse one YSI 6-Series binary DAT export (initial support)
+uv run imos-toolbox parse-ysi6 --file /path/to/file.dat --mode timeSeries
+
 # Parse one ReefNet Sensus Ultra CSV export (initial support)
 uv run imos-toolbox parse-sensus-ultra --file /path/to/file.csv --mode timeSeries
 ```

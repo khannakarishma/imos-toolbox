@@ -81,7 +81,7 @@ This section is the canonical setup guide for contributors working on the Python
 - [ ] Implement Echoview parser
 - [ ] Implement Infinity SD Logger parser
 - [x] Implement RCM parser
-- [ ] Implement YSI 6-Series parser
+- [x] Implement YSI 6-Series parser
 - [ ] Implement NetCDF re-import parser
 - [ ] Port GenericParser framework
 
