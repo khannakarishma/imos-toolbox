@@ -13,6 +13,7 @@ from imos_toolbox.parsers.sbe39 import SBE39Parser
 from imos_toolbox.parsers.sbe56 import SBE56Parser
 from imos_toolbox.parsers.wetstar import WetStarParser
 from imos_toolbox.parsers.wqm import WQMParser
+from imos_toolbox.parsers.xr import XRParser
 
 __all__ = [
 	"BaseParser",
@@ -28,5 +29,6 @@ __all__ = [
 	"SBE56Parser",
 	"WetStarParser",
 	"WQMParser",
+	"XRParser",
 	"load_instrument_parser_map",
 ]

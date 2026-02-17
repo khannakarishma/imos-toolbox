@@ -20,6 +20,7 @@ from imos_toolbox.parsers import (
     SBE56Parser,
     WetStarParser,
     WQMParser,
+    XRParser,
 )
 
 
@@ -57,6 +58,7 @@ def parser_map_cmd(make: str, model: str, repo_root: Path) -> None:
             ECOBB9Parser,
             DR1050Parser,
             WQMParser,
+            XRParser,
         ]
     )
     registry.load_instruments(instruments_file)
@@ -213,6 +215,20 @@ def parse_ecobb9_cmd(file_path: Path, mode: str) -> None:
 def parse_dr1050_cmd(file_path: Path, mode: str) -> None:
     """Parse one DR1050 export file and print summary."""
     parser = DR1050Parser()
+    dataset = parser.parse([file_path], mode)
+    xds = dataset.to_xarray()
+
+    click.echo(f"file={file_path}")
+    click.echo(f"variables={len(xds.data_vars)}")
+    click.echo(f"dimensions={dict(xds.dims)}")
+
+
+@main.command("parse-xr")
+@click.option("--file", "file_path", required=True, type=click.Path(path_type=Path, exists=True))
+@click.option("--mode", default="timeSeries", show_default=True)
+def parse_xr_cmd(file_path: Path, mode: str) -> None:
+    """Parse one XR420/XR620 export file and print summary."""
+    parser = XRParser()
     dataset = parser.parse([file_path], mode)
     xds = dataset.to_xarray()
 

@@ -69,7 +69,7 @@ This section is the canonical setup guide for contributors working on the Python
 - [x] Implement WetStar parser
 - [x] Implement ECOBB9 parser
 - [x] Implement ECO Triplet parser
-- [ ] Implement XR parser
+- [x] Implement XR parser
 - [x] Implement DR1050 parser
 - [ ] Implement Vemco parser
 - [ ] Implement NIWA parser
