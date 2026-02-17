@@ -74,8 +74,8 @@ This section is the canonical setup guide for contributors working on the Python
 - [x] Implement Vemco parser
 - [x] Implement NIWA parser
 - [ ] Implement NXIC binary parser
-- [ ] Implement Starmon Mini parser
-- [ ] Implement Starmon DST parser
+- [x] Implement Starmon Mini parser
+- [x] Implement Starmon DST parser
 - [ ] Implement Aquatec parser
 - [x] Implement Sensus Ultra parser
 - [ ] Implement Echoview parser

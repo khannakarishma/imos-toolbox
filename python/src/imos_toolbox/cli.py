@@ -20,6 +20,8 @@ from imos_toolbox.parsers import (
     SBE39Parser,
     SBE56Parser,
     SensusUltraParser,
+    StarmonDSTParser,
+    StarmonMiniParser,
     VemcoParser,
     WetStarParser,
     WQMParser,
@@ -57,6 +59,8 @@ def parser_map_cmd(make: str, model: str, repo_root: Path) -> None:
             SBE39Parser,
             SBE56Parser,
             SensusUltraParser,
+            StarmonMiniParser,
+            StarmonDSTParser,
             WetStarParser,
             ECOTripletParser,
             ECOBB9Parser,
@@ -277,6 +281,34 @@ def parse_niwa_cmd(file_path: Path, mode: str) -> None:
 def parse_sensus_ultra_cmd(file_path: Path, mode: str) -> None:
     """Parse one ReefNet Sensus Ultra CSV file and print summary."""
     parser = SensusUltraParser()
+    dataset = parser.parse([file_path], mode)
+    xds = dataset.to_xarray()
+
+    click.echo(f"file={file_path}")
+    click.echo(f"variables={len(xds.data_vars)}")
+    click.echo(f"dimensions={dict(xds.dims)}")
+
+
+@main.command("parse-starmon-mini")
+@click.option("--file", "file_path", required=True, type=click.Path(path_type=Path, exists=True))
+@click.option("--mode", default="timeSeries", show_default=True)
+def parse_starmon_mini_cmd(file_path: Path, mode: str) -> None:
+    """Parse one Star-Oddi Starmon Mini DAT file and print summary."""
+    parser = StarmonMiniParser()
+    dataset = parser.parse([file_path], mode)
+    xds = dataset.to_xarray()
+
+    click.echo(f"file={file_path}")
+    click.echo(f"variables={len(xds.data_vars)}")
+    click.echo(f"dimensions={dict(xds.dims)}")
+
+
+@main.command("parse-starmon-dst")
+@click.option("--file", "file_path", required=True, type=click.Path(path_type=Path, exists=True))
+@click.option("--mode", default="timeSeries", show_default=True)
+def parse_starmon_dst_cmd(file_path: Path, mode: str) -> None:
+    """Parse one Star-Oddi Starmon DST DAT file and print summary."""
+    parser = StarmonDSTParser()
     dataset = parser.parse([file_path], mode)
     xds = dataset.to_xarray()
 

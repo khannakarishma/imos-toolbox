@@ -70,6 +70,12 @@ uv run imos-toolbox parse-vemco --file /path/to/file.csv --mode timeSeries
 # Parse one NIWA DAT3 ASCII export (initial support)
 uv run imos-toolbox parse-niwa --file /path/to/file.DAT3 --mode timeSeries
 
+# Parse one Star-Oddi Starmon Mini DAT export (initial support)
+uv run imos-toolbox parse-starmon-mini --file /path/to/file.dat --mode timeSeries
+
+# Parse one Star-Oddi Starmon DST DAT export (initial support)
+uv run imos-toolbox parse-starmon-dst --file /path/to/file.dat --mode timeSeries
+
 # Parse one ReefNet Sensus Ultra CSV export (initial support)
 uv run imos-toolbox parse-sensus-ultra --file /path/to/file.csv --mode timeSeries
 ```

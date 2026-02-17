@@ -15,6 +15,8 @@ from imos_toolbox.parsers import (
     SBE39Parser,
     SBE56Parser,
     SensusUltraParser,
+    StarmonDSTParser,
+    StarmonMiniParser,
     VemcoParser,
     WetStarParser,
     WQMParser,
@@ -37,6 +39,8 @@ from imos_toolbox.parsers import (
         (VemcoParser, [".csv"]),
         (NIWAParser, [".dat3", ".dat"]),
         (SensusUltraParser, [".csv"]),
+        (StarmonMiniParser, [".dat"]),
+        (StarmonDSTParser, [".dat"]),
     ],
 )
 def test_parser_rejects_unsupported_extensions(
@@ -73,6 +77,8 @@ def test_parser_rejects_unsupported_extensions(
         ("parse-vemco",),
         ("parse-niwa",),
         ("parse-sensus-ultra",),
+        ("parse-starmon-mini",),
+        ("parse-starmon-dst",),
     ],
 )
 def test_parser_commands_exist(command_name: str) -> None:
