@@ -57,6 +57,9 @@ uv run imos-toolbox parse-ecotriplet --file /path/to/file.raw --mode timeSeries
 
 # Parse one ECOBB9 .raw file (+ matching .dev)
 uv run imos-toolbox parse-ecobb9 --file /path/to/file.raw --mode timeSeries
+
+# Parse one DR1050 export file (initial support)
+uv run imos-toolbox parse-dr1050 --file /path/to/file.txt --mode timeSeries
 ```
 
 ## Command Shortcuts

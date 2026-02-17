@@ -40,3 +40,13 @@ IMOS Toolbox converts oceanographic instrument files into quality-controlled IMO
 ## Python Port Roadmap
 - Maintain the Python port plan and progress checklist in `python/ROADMAP.md`.
 - When completing a Python port task, check it off in that roadmap.
+
+## Python Parser Delivery Cycle
+- For parser roadmap work, implement one parser at a time and keep changes scoped to that parser + shared utilities only.
+- After wiring parser code/CLI/docs, always run the local quality gate from `python/`:
+  - `uv run ruff check src tests`
+  - `uv run mypy src`
+  - `uv run pytest -v`
+  - `uv run imos-toolbox --help`
+- Only push when all checks pass locally.
+- After push, monitor GitHub Actions `Python Port CI` and address failures before moving to the next parser.
