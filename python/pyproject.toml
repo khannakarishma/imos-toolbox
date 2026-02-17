@@ -27,6 +27,7 @@ dependencies = [
   "xarray>=2023.1",
   "netCDF4>=1.6",
   "gsw>=3.6",
+  "seabird>=0.12",
 ]
 
 [project.optional-dependencies]

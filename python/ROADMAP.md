@@ -3,22 +3,61 @@
 This roadmap tracks the Python port plan and progress. Check items off as work is completed.
 
 ## Phase 1 - Scaffold and core model
+- [x] Install uv for environment and dependency management
+- [x] Bootstrap local Python environment with uv (.venv + sync)
+- [x] Pin project interpreter via .python-version (3.14)
+- [x] Validate CLI boot using uv run
 - [x] Create package layout under python/
 - [x] Add core IMOSDataset wrapper and helpers
 - [x] Add config loader for toolboxProperties.txt
 - [x] Add conventions loaders (parameters, QC flags, QC tests, file versions, sites, naming)
 - [x] Add CLI entrypoint skeleton
 
+## Python Development Setup (Detailed)
+
+This section is the canonical setup guide for contributors working on the Python port.
+
+### Environment management standard
+- [x] Use `uv` as the single environment and dependency manager for this project
+- [x] Keep a project-local virtual environment at `python/.venv`
+- [x] Pin interpreter target in `python/.python-version` to `3.14`
+
+### Bootstrap steps (fresh clone)
+- [x] Install uv (`python -m pip install uv` or official installer)
+- [x] Install Python 3.14 runtime via uv (`uv python install 3.14`)
+- [x] Create `.venv` with pinned runtime (`uv venv --python 3.14 .venv`)
+- [x] Sync dependencies (`uv sync --extra dev`)
+
+### Day-to-day development workflow
+- [x] Add README section with UV-first commands and examples
+- [x] Standardize all project commands through `uv run` (tests, lint, type checks, CLI)
+- [x] Add contributor command reference for:
+	- [x] `uv run imos-toolbox info`
+	- [x] `uv run pytest -v`
+	- [x] `uv run ruff check src tests`
+	- [x] `uv run mypy src`
+
+### Verification and diagnostics
+- [x] Verify interpreter (`uv run python --version` reports 3.14.x)
+- [x] Verify package entrypoint (`uv run imos-toolbox info`)
+- [x] Add a `make`/task alias or script targets (optional) for common uv commands
+- [x] Document common setup failures and fixes (broken local Python, stale `.venv`, lock mismatch)
+
+### Dependency/lock hygiene
+- [x] Keep `uv.lock` committed and updated when dependencies change
+- [ ] Define policy for dependency updates (e.g., scheduled bump window)
+- [x] Add CI check to ensure lockfile is in sync with `pyproject.toml`
+
 ## Phase 2 - Parser framework and mapping
-- [ ] Add parser base class and registry
-- [ ] Load parser mapping from Parser/instruments.txt
-- [ ] Implement SBE19 parser
-- [ ] Implement SBE26 parser
-- [ ] Implement SBE37 parser
-- [ ] Implement SBE37SM parser
-- [ ] Implement SBE39 parser
-- [ ] Implement SBE56 parser
-- [ ] Implement SBE3x shared logic
+- [x] Add parser base class and registry
+- [x] Load parser mapping from Parser/instruments.txt
+- [x] Implement SBE19 parser
+- [x] Implement SBE26 parser
+- [x] Implement SBE37 parser
+- [x] Implement SBE37SM parser
+- [x] Implement SBE39 parser
+- [x] Implement SBE56 parser
+- [x] Implement SBE3x shared logic
 - [ ] Implement Workhorse ADCP parser
 - [ ] Implement AWAC parser
 - [ ] Implement Continental parser
@@ -26,7 +65,7 @@ This roadmap tracks the Python port plan and progress. Check items off as work i
 - [ ] Implement Aquadopp Velocity parser
 - [ ] Implement Signature/AD2CP parser
 - [ ] Implement OceanContour parser
-- [ ] Implement WQM parser
+- [x] Implement WQM parser
 - [ ] Implement WetStar parser
 - [ ] Implement ECOBB9 parser
 - [ ] Implement ECO Triplet parser
