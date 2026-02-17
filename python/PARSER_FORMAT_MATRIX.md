@@ -6,6 +6,7 @@ This matrix tracks parser-to-format coverage in the Python port and is backed by
 | Parser | CLI command | Formats (initial support) |
 |---|---|---|
 | SBE19 | `parse-sbe19` | `.cnv` |
+| Aquatec | `parse-aquatec` | `.txt`, `.dat`, `.csv` |
 | SBE26 | `parse-sbe26` | `.tid` |
 | SBE37 | `parse-sbe37` | `.asc`, `.cnv` |
 | SBE37SM | `parse-sbe37sm` | `.asc`, `.cnv` |

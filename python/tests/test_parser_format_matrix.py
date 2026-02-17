@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from imos_toolbox.parsers import (
+    AquatecParser,
     ECOBB9Parser,
     ECOTripletParser,
     NIWAParser,
@@ -27,6 +28,7 @@ from imos_toolbox.parsers import (
     ("parser_cls", "supported_suffixes"),
     [
         (SBE19Parser, [".cnv"]),
+        (AquatecParser, [".txt", ".dat", ".csv"]),
         (SBE26Parser, [".tid"]),
         (SBE37Parser, [".asc", ".cnv"]),
         (SBE37SMParser, [".asc", ".cnv"]),
@@ -63,6 +65,7 @@ def test_parser_rejects_unsupported_extensions(
     ("command_name",),
     [
         ("parse-sbe19",),
+        ("parse-aquatec",),
         ("parse-sbe26",),
         ("parse-sbe37",),
         ("parse-sbe37sm",),

@@ -8,6 +8,7 @@ import click
 
 from imos_toolbox.config import resolve_repo_root
 from imos_toolbox.parsers import (
+    AquatecParser,
     DR1050Parser,
     ECOBB9Parser,
     ECOTripletParser,
@@ -61,6 +62,7 @@ def parser_map_cmd(make: str, model: str, repo_root: Path) -> None:
             SensusUltraParser,
             StarmonMiniParser,
             StarmonDSTParser,
+            AquatecParser,
             WetStarParser,
             ECOTripletParser,
             ECOBB9Parser,
@@ -309,6 +311,20 @@ def parse_starmon_mini_cmd(file_path: Path, mode: str) -> None:
 def parse_starmon_dst_cmd(file_path: Path, mode: str) -> None:
     """Parse one Star-Oddi Starmon DST DAT file and print summary."""
     parser = StarmonDSTParser()
+    dataset = parser.parse([file_path], mode)
+    xds = dataset.to_xarray()
+
+    click.echo(f"file={file_path}")
+    click.echo(f"variables={len(xds.data_vars)}")
+    click.echo(f"dimensions={dict(xds.dims)}")
+
+
+@main.command("parse-aquatec")
+@click.option("--file", "file_path", required=True, type=click.Path(path_type=Path, exists=True))
+@click.option("--mode", default="timeSeries", show_default=True)
+def parse_aquatec_cmd(file_path: Path, mode: str) -> None:
+    """Parse one Aquatec Aqualogger export file and print summary."""
+    parser = AquatecParser()
     dataset = parser.parse([file_path], mode)
     xds = dataset.to_xarray()
 

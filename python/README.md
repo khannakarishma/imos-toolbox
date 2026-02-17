@@ -76,6 +76,9 @@ uv run imos-toolbox parse-starmon-mini --file /path/to/file.dat --mode timeSerie
 # Parse one Star-Oddi Starmon DST DAT export (initial support)
 uv run imos-toolbox parse-starmon-dst --file /path/to/file.dat --mode timeSeries
 
+# Parse one Aquatec Aqualogger export (initial support)
+uv run imos-toolbox parse-aquatec --file /path/to/file.txt --mode timeSeries
+
 # Parse one ReefNet Sensus Ultra CSV export (initial support)
 uv run imos-toolbox parse-sensus-ultra --file /path/to/file.csv --mode timeSeries
 ```
