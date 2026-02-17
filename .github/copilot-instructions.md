@@ -36,3 +36,7 @@ IMOS Toolbox converts oceanographic instrument files into quality-controlled IMO
 
 ## Documentation
 - Prefer linking to the wiki for usage; update `README.md` only for repo-level changes.
+
+## Python Port Roadmap
+- Maintain the Python port plan and progress checklist in `python/ROADMAP.md`.
+- When completing a Python port task, check it off in that roadmap.
