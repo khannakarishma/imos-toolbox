@@ -63,6 +63,9 @@ uv run imos-toolbox parse-dr1050 --file /path/to/file.txt --mode timeSeries
 
 # Parse one XR420/XR620 export file (initial support)
 uv run imos-toolbox parse-xr --file /path/to/file.dat --mode timeSeries
+
+# Parse one Vemco Logger Vue CSV export (initial support)
+uv run imos-toolbox parse-vemco --file /path/to/file.csv --mode timeSeries
 ```
 
 ## Command Shortcuts

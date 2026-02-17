@@ -71,7 +71,7 @@ This section is the canonical setup guide for contributors working on the Python
 - [x] Implement ECO Triplet parser
 - [x] Implement XR parser
 - [x] Implement DR1050 parser
-- [ ] Implement Vemco parser
+- [x] Implement Vemco parser
 - [ ] Implement NIWA parser
 - [ ] Implement NXIC binary parser
 - [ ] Implement Starmon Mini parser
