@@ -110,13 +110,13 @@ This section is the canonical setup guide for contributors working on the Python
 - [ ] Implement variableOffsetPP
 
 ## Phase 4 - Automatic QC
-- [ ] Add QC base classes and chain runner
-- [ ] Implement imosImpossibleDateQC
-- [ ] Implement imosImpossibleLocationSetQC
-- [ ] Implement imosInOutWaterQC
-- [ ] Implement imosGlobalRangeQC
-- [ ] Implement imosRegionalRangeQC
-- [ ] Implement imosImpossibleDepthQC
+- [x] Add QC base classes and chain runner
+- [x] Implement imosImpossibleDateQC
+- [x] Implement imosImpossibleLocationSetQC
+- [x] Implement imosInOutWaterQC
+- [x] Implement imosGlobalRangeQC
+- [x] Implement imosRegionalRangeQC
+- [x] Implement imosImpossibleDepthQC
 - [ ] Implement imosSalinityFromPTQC
 - [ ] Implement imosRateOfChangeQC
 - [ ] Implement imosTimeSeriesSpikeQC
@@ -140,10 +140,14 @@ This section is the canonical setup guide for contributors working on the Python
 - [ ] Implement imosHistoricalManualSetQC
 - [ ] Port spike classifiers (SavGol, Hampel, RunningStats, OTSU, others)
 
-## Phase 5 - NetCDF export
+## Phase 5 - NetCDF/Parquet/Zarr export
 - [ ] Implement NetCDF template parser
 - [ ] Implement makeNetCDFCompliant logic
 - [ ] Implement NetCDF export writer
+- [ ] Implement Parquet export writer (parallel to NetCDF outputs)
+- [ ] Capture and persist dataset/variable metadata in Parquet outputs
+- [ ] Implement Zarr export target for suitable multidimensional data types
+- [ ] Capture and persist dataset/variable metadata in Zarr outputs
 - [ ] Implement finaliseData equivalent
 - [ ] Port global_attributes_timeSeries template
 - [ ] Port global_attributes_profile template
@@ -180,6 +184,7 @@ This section is the canonical setup guide for contributors working on the Python
 - [ ] Add CLI options for QC/PP chain overrides
 - [ ] Add CLI options for DDB connection settings
 - [ ] Add CLI options for template and export settings
+- [ ] Add CLI options to select export targets (NetCDF, Parquet, Zarr where applicable)
 - [ ] Add CLI options for log/diagnostic output
 
 ## Phase 7 - Dash web UI
@@ -208,6 +213,8 @@ This section is the canonical setup guide for contributors working on the Python
 - [ ] Port representative parser tests
 - [ ] Port preprocessing/QC tests
 - [ ] Add NetCDF regression tests
+- [ ] Add Parquet regression tests (including metadata round-trip checks)
+- [ ] Add Zarr regression tests for eligible multidimensional datasets (including metadata round-trip checks)
 - [ ] Add CI checks (lint, typecheck, tests)
 
 ## Phase 9 - Documentation and release
@@ -221,3 +228,10 @@ This section is the canonical setup guide for contributors working on the Python
 - [x] Verified end-to-end manual flagging state mutation path (`dataset-store` updates QC flags).
 - [x] Added regression coverage for manual-flag callback wiring.
 - [ ] Next session: wire export flow from in-memory QC state to file outputs.
+
+## Bookend update (2026-03-02)
+- [x] Phase 4 foundation: added QC base classes (`QCFlags`, `QCResult`, `QCVariableRoutine`, `QCSetRoutine`) and chain runner with flag-upgrade-only semantics.
+- [x] Implemented 6 automatic QC routines: `ImpossibleDateQC`, `ImpossibleLocationSetQC`, `InOutWaterQC`, `GlobalRangeQC`, `RegionalRangeQC`, `ImpossibleDepthQC`.
+- [x] Created 41 unit tests with synthetic oceanographic data (SBE37 at NRSMAI, GBR temperature logger at GBRHIS).
+- [x] All quality gates passing: 85 tests green, ruff clean, mypy clean.
+- [ ] Next session: continue Phase 4 with `imosSalinityFromPTQC`, `imosRateOfChangeQC`, spike classifiers, and remaining QC routines.
