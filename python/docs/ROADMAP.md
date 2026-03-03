@@ -86,13 +86,18 @@ This section is the canonical setup guide for contributors working on the Python
 - [ ] Port GenericParser framework
 
 ## Phase 3 - Preprocessing
-- [ ] Add preprocessing base class and chain runner
-- [ ] Implement depthPP using gsw
-- [ ] Implement salinityPP using gsw
-- [ ] Implement oxygenPP using gsw
-- [ ] Implement pressureRelPP
-- [ ] Implement magneticDeclinationPP using pyIGRF
-- [ ] Implement velocityMagDirPP
+- [x] Add preprocessing base class (`PPRoutine`, `PPResult`) and chain runner (`run_pp_chain`)
+- [x] Implement pressureRelPP (PRES_REL = PRES + offset, default -10.1325 dbar)
+- [x] Implement depthPP using gsw (DEPTH = -gsw.z_from_p(PRES_REL, lat); fallback 1 dbar ≈ 1 m)
+- [x] Implement salinityPP using gsw (PSAL from CNDC, TEMP, PRES_REL via gsw.SP_from_C)
+- [x] Implement oxygenPP using gsw (OXSOL_SURFACE, DOX1, DOX2, DOXS conversions)
+- [x] Implement velocityMagDirPP (CSPD/CDIR from UCUR/VCUR)
+- [x] Implement timeOffsetPP (UTC timezone correction; parses numeric, UTC±HH[:MM])
+- [x] Implement timeDriftPP (linear time-drift correction between start/end offsets)
+- [x] Implement variableOffsetPP (data = offset + scale * data for named variables)
+- [x] Wire `preprocess` CLI command for default timeSeries/profile chains
+- [x] Add 31 unit tests (all passing), ruff clean, mypy clean
+- [ ] Implement magneticDeclinationPP using pyIGRF or equivalent
 - [ ] Implement adcpBinMappingPP
 - [ ] Implement adcpNortekVelocityBeam2EnuPP
 - [ ] Implement adcpNortekVelocityEnu2BeamPP
@@ -102,12 +107,9 @@ This section is the canonical setup guide for contributors working on the Python
 - [ ] Implement aquatrackaPP
 - [ ] Implement rinkoDoPP
 - [ ] Implement CTDDepthBinPP
-- [ ] Implement timeDriftPP
-- [ ] Implement timeOffsetPP
 - [ ] Implement timeMetaOffsetPP
 - [ ] Implement timeStartPP
 - [ ] Implement soakStatusPP
-- [ ] Implement variableOffsetPP
 
 ## Phase 4 - Automatic QC
 - [x] Add QC base classes and chain runner
@@ -236,8 +238,16 @@ This section is the canonical setup guide for contributors working on the Python
 - [x] All quality gates passing: 85 tests green, ruff clean, mypy clean.
 - [ ] Next session: continue Phase 4 with `imosSalinityFromPTQC`, `imosRateOfChangeQC`, spike classifiers, and remaining QC routines.
 
-## Bookend update (2026-03-03)
-- [x] Implemented `SalinityFromPTQC` routine to propagate QC flags from pressure/temperature/conductivity to salinity.
+## Bookend update (2026-03-03) – session 2
+- [x] Ported the preprocessing pipeline (Phase 3) — default timeSeries and profile chains fully operational.
+- [x] Added `preprocessing/` subpackage with `PPRoutine` / `PPResult` base class and `run_pp_chain` runner (mirrors autoqc architecture).
+- [x] Implemented 9 preprocessing routines: `pressureRelPP`, `depthPP`, `salinityPP`, `oxygenPP`, `velocityMagDirPP`, `timeOffsetPP`, `timeDriftPP`, `variableOffsetPP`.
+- [x] Fixed gsw Python API difference (`gsw.SP_from_C` instead of MATLAB `gsw.SP_from_R(R, T, P)`).
+- [x] Wired `preprocess` CLI command for default timeSeries/profile chains on existing NetCDF files.
+- [x] Added 31 unit tests (all passing, including full chain integration test).
+- [x] All quality gates passing: 146 tests green, ruff clean, mypy clean.
+- [x] **Phase 3 core preprocessing complete** (ADCP-specific and minor routines remain).
+- [ ] Next session: begin Phase 5 NetCDF export, or port remaining preprocessing ADCP/transform routines.
 - [x] Implemented `RateOfChangeQC` routine to detect rapid changes in parameter values using gradient thresholds.
 - [x] Implemented `TimeSeriesSpikeQC` routine using Hampel filter for spike detection in time series.
 - [x] Implemented `VerticalSpikeQC` routine using ARGO spike test for vertical profiles.

@@ -382,5 +382,50 @@ def parse_ysi6_cmd(file_path: Path, mode: str) -> None:
     click.echo(f"dimensions={dict(xds.dims)}")
 
 
+@main.command("preprocess")
+@click.option("--file", "file_path", required=True, type=click.Path(path_type=Path, exists=True))
+@click.option(
+    "--mode",
+    default="timeSeries",
+    show_default=True,
+    type=click.Choice(["timeSeries", "profile"]),
+)
+@click.option("--pressure-offset", default=-10.1325, show_default=True, type=float,
+              help="Offset applied to PRES to derive PRES_REL (dbar).")
+def preprocess_cmd(file_path: Path, mode: str, pressure_offset: float) -> None:
+    """Run the default preprocessing chain on a parsed NetCDF file.
+
+    The input file must be a NetCDF file previously produced by a parse-*
+    command.  The routine applies the default preprocessing chain for the
+    given mode and prints a summary of which steps ran.
+    """
+    import xarray as xr
+    from imos_toolbox.model import IMOSDataset
+    from imos_toolbox.preprocessing.runner import run_pp_chain
+    from imos_toolbox.preprocessing.pressure_rel import PressureRelPP
+    from imos_toolbox.preprocessing.depth import DepthPP
+    from imos_toolbox.preprocessing.salinity import SalinityPP
+    from imos_toolbox.preprocessing.oxygen import OxygenPP
+    from imos_toolbox.preprocessing.velocity_mag_dir import VelocityMagDirPP
+
+    ds = IMOSDataset(xr.open_dataset(str(file_path)))
+
+    routines = [
+        PressureRelPP(offset_dbar=pressure_offset),
+        DepthPP(),
+        SalinityPP(),
+        OxygenPP(),
+    ]
+    if mode == "timeSeries":
+        routines.append(VelocityMagDirPP())
+
+    results = run_pp_chain(ds, routines)
+
+    click.echo(f"file={file_path}  mode={mode}")
+    for routine, result in zip(routines, results):
+        status = "MODIFIED" if result.modified else "skipped"
+        click.echo(f"  [{status:8s}] {routine.name}: {result.log[:80]}")
+
+
 if __name__ == "__main__":
     main()
