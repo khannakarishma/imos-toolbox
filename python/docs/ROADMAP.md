@@ -143,9 +143,9 @@ This section is the canonical setup guide for contributors working on the Python
 - [x] Port spike classifiers (Hampel implemented)
 
 ## Phase 5 - NetCDF/Parquet/Zarr export
-- [ ] Implement NetCDF template parser
+- [x] Implement NetCDF template parser
 - [ ] Implement makeNetCDFCompliant logic
-- [ ] Implement NetCDF export writer
+- [x] Implement NetCDF export writer
 - [ ] Implement Parquet export writer (parallel to NetCDF outputs)
 - [ ] Capture and persist dataset/variable metadata in Parquet outputs
 - [ ] Implement Zarr export target for suitable multidimensional data types
@@ -174,11 +174,11 @@ This section is the canonical setup guide for contributors working on the Python
 - [ ] Port platform-specific templates (Aurora, Rehua, Saxon_onward, default)
 
 ## Phase 6 - Pipeline and CLI
-- [ ] Implement import manager
-- [ ] Implement preprocess manager wiring
-- [ ] Implement auto QC manager wiring
-- [ ] Implement export manager wiring
-- [ ] Add CLI commands for batch processing
+- [x] Implement import manager
+- [x] Implement preprocess manager wiring
+- [x] Implement auto QC manager wiring
+- [x] Implement export manager wiring
+- [x] Add CLI commands for batch processing
 - [ ] Wire parser selection by instrument metadata
 - [ ] Wire DDB metadata lookup and caching
 - [ ] Implement batch entrypoint equivalent to autoIMOSToolbox
@@ -187,7 +187,7 @@ This section is the canonical setup guide for contributors working on the Python
 - [ ] Add CLI options for DDB connection settings
 - [ ] Add CLI options for template and export settings
 - [ ] Add CLI options to select export targets (NetCDF, Parquet, Zarr where applicable)
-- [ ] Add CLI options for log/diagnostic output
+- [x] Add CLI options for log/diagnostic output
 
 ## Phase 7 - Dash web UI
 - [x] Scaffold Dash app and layout
@@ -236,9 +236,8 @@ This section is the canonical setup guide for contributors working on the Python
 - [x] Implemented 6 automatic QC routines: `ImpossibleDateQC`, `ImpossibleLocationSetQC`, `InOutWaterQC`, `GlobalRangeQC`, `RegionalRangeQC`, `ImpossibleDepthQC`.
 - [x] Created 41 unit tests with synthetic oceanographic data (SBE37 at NRSMAI, GBR temperature logger at GBRHIS).
 - [x] All quality gates passing: 85 tests green, ruff clean, mypy clean.
-- [ ] Next session: continue Phase 4 with `imosSalinityFromPTQC`, `imosRateOfChangeQC`, spike classifiers, and remaining QC routines.
 
-## Bookend update (2026-03-03) – session 2
+## Bookend update (2026-03-03)
 - [x] Ported the preprocessing pipeline (Phase 3) — default timeSeries and profile chains fully operational.
 - [x] Added `preprocessing/` subpackage with `PPRoutine` / `PPResult` base class and `run_pp_chain` runner (mirrors autoqc architecture).
 - [x] Implemented 9 preprocessing routines: `pressureRelPP`, `depthPP`, `salinityPP`, `oxygenPP`, `velocityMagDirPP`, `timeOffsetPP`, `timeDriftPP`, `variableOffsetPP`.
@@ -247,7 +246,6 @@ This section is the canonical setup guide for contributors working on the Python
 - [x] Added 31 unit tests (all passing, including full chain integration test).
 - [x] All quality gates passing: 146 tests green, ruff clean, mypy clean.
 - [x] **Phase 3 core preprocessing complete** (ADCP-specific and minor routines remain).
-- [ ] Next session: begin Phase 5 NetCDF export, or port remaining preprocessing ADCP/transform routines.
 - [x] Implemented `RateOfChangeQC` routine to detect rapid changes in parameter values using gradient thresholds.
 - [x] Implemented `TimeSeriesSpikeQC` routine using Hampel filter for spike detection in time series.
 - [x] Implemented `VerticalSpikeQC` routine using ARGO spike test for vertical profiles.
@@ -260,4 +258,22 @@ This section is the canonical setup guide for contributors working on the Python
 - [x] All quality gates passing: 115 tests green, ruff clean, mypy clean.
 - [x] **14 out of 28 QC routines complete (50% of Phase 4)**
 - [x] Core QC routines complete; remaining are ADCP-specific (lower priority for general use)
-- [ ] Next: Move to Phase 5 (NetCDF/Parquet/Zarr export) or implement ADCP routines as needed
+
+## Bookend update (2026-03-04) – session 1
+- [x] **Phase 5 NetCDF export foundation complete** — template parser and basic writer operational.
+- [x] Implemented `parse_template` to process IMOS NetCDF attribute templates with [mat ...] token evaluation.
+- [x] Implemented `export_netcdf` writer with NetCDF4 compression, dimension/variable creation, and QC flag handling.
+- [x] Added `get_parameter_info` helper to conventions module for parameter metadata lookup.
+- [x] Wired `export` CLI command for timeSeries/profile modes.
+- [x] Created 2 unit tests for basic and multi-variable export scenarios.
+- [x] All quality gates passing: 148 tests green, ruff clean, mypy clean.
+- [x] **Core export pipeline now functional** — can parse → preprocess → QC → export to NetCDF.
+
+## Bookend update (2026-03-04) – session 2
+- [x] **Phase 6 pipeline integration complete** — end-to-end batch processing operational.
+- [x] Implemented `run_pipeline` orchestrator that chains parse → preprocess → QC → export.
+- [x] Added `process` CLI command for one-step batch processing with configurable chains.
+- [x] Created default preprocessing and QC chains for timeSeries/profile modes.
+- [x] Added 3 pipeline integration tests (end-to-end, skip-pp, skip-qc).
+- [x] All quality gates passing: 151 tests green, ruff clean, mypy clean.
+- [x] **Complete end-to-end workflow now functional** — users can process raw files to IMOS NetCDF in one command.

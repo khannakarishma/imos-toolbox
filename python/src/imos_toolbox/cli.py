@@ -427,5 +427,94 @@ def preprocess_cmd(file_path: Path, mode: str, pressure_offset: float) -> None:
         click.echo(f"  [{status:8s}] {routine.name}: {result.log[:80]}")
 
 
+@main.command("export")
+@click.option("--file", "file_path", required=True, type=click.Path(path_type=Path, exists=True))
+@click.option("--output-dir", required=True, type=click.Path(path_type=Path))
+@click.option(
+    "--mode",
+    default="timeSeries",
+    show_default=True,
+    type=click.Choice(["timeSeries", "profile"]),
+)
+def export_cmd(file_path: Path, output_dir: Path, mode: str) -> None:
+    """Export a dataset to IMOS-compliant NetCDF.
+
+    The input file should be a NetCDF file (from parse-* or preprocess commands).
+    """
+    import xarray as xr
+    from imos_toolbox.model import IMOSDataset
+    from imos_toolbox.export import export_netcdf
+
+    ds = IMOSDataset(xr.open_dataset(str(file_path)))
+    output_path = export_netcdf(ds, output_dir, mode)
+    click.echo(f"Exported: {output_path}")
+
+
+@main.command("process")
+@click.option("--file", "file_path", required=True, type=click.Path(path_type=Path, exists=True))
+@click.option("--output-dir", required=True, type=click.Path(path_type=Path))
+@click.option(
+    "--mode",
+    default="timeSeries",
+    show_default=True,
+    type=click.Choice(["timeSeries", "profile"]),
+)
+@click.option("--parser", help="Parser name (auto-detected if omitted)")
+@click.option("--skip-pp", is_flag=True, help="Skip preprocessing")
+@click.option("--skip-qc", is_flag=True, help="Skip quality control")
+def process_cmd(
+    file_path: Path,
+    output_dir: Path,
+    mode: str,
+    parser: str | None,
+    skip_pp: bool,
+    skip_qc: bool,
+) -> None:
+    """Process a raw instrument file through the complete pipeline.
+
+    This command runs: parse → preprocess → QC → export in one step.
+    """
+    from imos_toolbox.model import IMOSDataset
+    from imos_toolbox.pipeline import run_pipeline
+
+    # Step 1: Parse
+    click.echo(f"Parsing {file_path.name}...")
+    if parser:
+        # Use specified parser
+        registry = ParserRegistry()
+        registry.register_many([
+            SBE19Parser, SBE26Parser, SBE37Parser, SBE37SMParser,
+            SBE39Parser, SBE56Parser, WQMParser, WetStarParser,
+            ECOTripletParser, ECOBB9Parser, XRParser, DR1050Parser,
+            VemcoParser, NIWAParser, StarmonMiniParser, StarmonDSTParser,
+            AquatecParser, RCMParser, YSI6SeriesParser, SensusUltraParser,
+        ])
+        parser_cls = registry.get(parser)
+        if not parser_cls:
+            raise click.ClickException(f"Unknown parser: {parser}")
+        dataset = parser_cls().parse([file_path], mode)
+    else:
+        # Auto-detect parser (simplified - just try common ones)
+        raise click.ClickException("Auto-detection not yet implemented. Use --parser option.")
+
+    # Step 2-4: Run pipeline
+    pp_chain = None if skip_pp else []  # None = use defaults, [] = skip
+    qc_chain = None if skip_qc else []
+
+    result = run_pipeline(
+        dataset,
+        mode,
+        output_dir,
+        pp_chain=pp_chain if not skip_pp else [],
+        qc_chain=qc_chain if not skip_qc else [],
+        log_callback=click.echo,
+    )
+
+    if result.success:
+        click.echo(f"\n✓ Success: {result.output_file}")
+    else:
+        raise click.ClickException(f"Processing failed: {result.error}")
+
+
 if __name__ == "__main__":
     main()

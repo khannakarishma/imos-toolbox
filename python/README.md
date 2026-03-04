@@ -8,6 +8,8 @@ This directory contains the early-stage Python port of the IMOS Toolbox.
 - Dash UI scaffold is wired to real parser outputs for dataset preview and in-memory QC interactions.
 - Preprocessing, full automatic QC chain, NetCDF export pipeline, and production workflow wiring remain in progress.
 
+See [docs/ROADMAP.md](docs/ROADMAP.md) for detailed progress tracking.
+
 ## Development
 
 ```bash
@@ -52,6 +54,15 @@ uv run imos-toolbox parser-map --make "SEABIRD" --model "SBE19plus V2" --repo-ro
 
 # Parse one SBE19 .cnv file (initial support)
 uv run imos-toolbox parse-sbe19 --file /path/to/file.cnv --mode timeSeries
+
+# Preprocess a parsed NetCDF file (applies default chain: pressure, depth, salinity, oxygen, velocity)
+uv run imos-toolbox preprocess --file /path/to/parsed.nc --mode timeSeries
+
+# Export to IMOS-compliant NetCDF
+uv run imos-toolbox export --file /path/to/processed.nc --output-dir /path/to/output --mode timeSeries
+
+# Or process everything in one command (parse → preprocess → QC → export)
+uv run imos-toolbox process --file /path/to/raw_data.asc --output-dir /path/to/output --mode timeSeries --parser sbe37
 
 # Parse one SBE26 .tid file (initial support)
 uv run imos-toolbox parse-sbe26 --file /path/to/file.tid --mode timeSeries
