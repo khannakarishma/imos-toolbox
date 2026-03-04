@@ -2,6 +2,22 @@
 
 This roadmap tracks the Python port plan and progress. Check items off as work is completed.
 
+## Regression Testing Documentation
+
+**MCR-Based Approach** (Recommended - No MATLAB License Required):
+- 📘 [MCR_SUMMARY.md](MCR_SUMMARY.md) - Executive summary and recommendation
+- 📗 [MCR_REGRESSION_PLAN.md](MCR_REGRESSION_PLAN.md) - Comprehensive technical plan (20KB)
+- 📕 [MCR_QUICKSTART.md](MCR_QUICKSTART.md) - 30-minute quick-start guide
+
+**Traditional MATLAB Approach** (Alternative):
+- 📙 [REGRESSION_TESTING_SUMMARY.md](REGRESSION_TESTING_SUMMARY.md) - Executive summary
+- 📘 [REGRESSION_TESTING_PLAN.md](REGRESSION_TESTING_PLAN.md) - Detailed technical plan (15KB)
+- 📗 [REGRESSION_TESTING_QUICKSTART.md](REGRESSION_TESTING_QUICKSTART.md) - Step-by-step guide
+
+**Recommendation**: Use MCR approach for $10,750+ savings and faster implementation (6 weeks vs 10 weeks).
+
+---
+
 ## Phase 1 - Scaffold and core model
 - [x] Install uv for environment and dependency management
 - [x] Bootstrap local Python environment with uv (.venv + sync)
@@ -223,6 +239,86 @@ This section is the canonical setup guide for contributors working on the Python
 - [ ] Add user and developer docs
 - [ ] Add migration notes from MATLAB
 - [ ] Publish first alpha release to PyPI
+
+## Phase 10 - Regression testing against MATLAB
+**Note**: See `MCR_REGRESSION_PLAN.md` for detailed MCR-based testing strategy (recommended approach - no MATLAB license required).
+
+- [ ] **Test infrastructure setup**
+  - [ ] Install MCR v95 (MATLAB Runtime R2018b) in CI environment
+  - [ ] Create MCR wrapper module (`python/tests/regression/mcr_wrapper.py`)
+  - [ ] Create MCR baseline generator (`python/tests/regression/generate_mcr_baselines.py`)
+  - [ ] Add Docker container for MCR-based testing (`docker/regression-mcr.Dockerfile`)
+  - [ ] Add GitHub Actions workflow for MCR regression tests (`.github/workflows/regression-mcr.yml`)
+  - [ ] Create `python/tests/regression/` directory structure
+  - [ ] Add Python regression test runner (`python/tests/regression/run_regression_suite.py`)
+  - [ ] Define comparison tolerance thresholds (numeric: 1e-6 relative, flags: exact match)
+  - [ ] Create test data repository or download script for representative instrument files
+- [ ] **Parser regression tests**
+  - [ ] SBE19 parser: compare parsed variables, dimensions, metadata
+  - [ ] SBE26 parser: compare parsed variables, dimensions, metadata
+  - [ ] SBE37/SBE37SM parser: compare parsed variables, dimensions, metadata
+  - [ ] SBE39 parser: compare parsed variables, dimensions, metadata
+  - [ ] SBE56 parser: compare parsed variables, dimensions, metadata
+  - [ ] WQM parser: compare parsed variables, dimensions, metadata
+  - [ ] WetStar/ECO parsers: compare parsed variables, dimensions, metadata
+  - [ ] XR/DR1050 parsers: compare parsed variables, dimensions, metadata
+  - [ ] Vemco parser: compare parsed variables, dimensions, metadata
+  - [ ] NIWA parser: compare parsed variables, dimensions, metadata
+  - [ ] Starmon parsers: compare parsed variables, dimensions, metadata
+  - [ ] Aquatec parser: compare parsed variables, dimensions, metadata
+  - [ ] RCM parser: compare parsed variables, dimensions, metadata
+  - [ ] YSI 6-Series parser: compare parsed variables, dimensions, metadata
+  - [ ] Sensus Ultra parser: compare parsed variables, dimensions, metadata
+  - [ ] ADCP parsers (Workhorse, AWAC, Aquadopp, Signature): compare when implemented
+- [ ] **Preprocessing regression tests**
+  - [ ] pressureRelPP: compare PRES_REL output values
+  - [ ] depthPP: compare DEPTH output values (gsw Python vs MATLAB)
+  - [ ] salinityPP: compare PSAL output values (gsw Python vs MATLAB)
+  - [ ] oxygenPP: compare OXSOL_SURFACE, DOX1, DOX2, DOXS output values
+  - [ ] velocityMagDirPP: compare CSPD/CDIR output values
+  - [ ] timeOffsetPP: compare adjusted TIME values
+  - [ ] timeDriftPP: compare drift-corrected TIME values
+  - [ ] variableOffsetPP: compare offset-adjusted variable values
+  - [ ] Full preprocessing chain: compare end-to-end timeSeries and profile outputs
+- [ ] **Automatic QC regression tests**
+  - [ ] imosImpossibleDateQC: compare QC flags
+  - [ ] imosImpossibleLocationSetQC: compare QC flags
+  - [ ] imosInOutWaterQC: compare QC flags
+  - [ ] imosGlobalRangeQC: compare QC flags
+  - [ ] imosRegionalRangeQC: compare QC flags
+  - [ ] imosImpossibleDepthQC: compare QC flags
+  - [ ] imosSalinityFromPTQC: compare QC flags
+  - [ ] imosRateOfChangeQC: compare QC flags
+  - [ ] imosTimeSeriesSpikeQC: compare QC flags (Hampel filter)
+  - [ ] imosVerticalSpikeQC: compare QC flags (ARGO spike test)
+  - [ ] imosDensityInversionSetQC: compare QC flags
+  - [ ] imosStationarityQC: compare QC flags
+  - [ ] CTDSurfaceSoakQC: compare QC flags
+  - [ ] imosSurfaceDetectionByDepthSetQC: compare QC flags
+  - [ ] Full QC chain: compare end-to-end timeSeries and profile QC flag arrays
+- [ ] **NetCDF export regression tests**
+  - [ ] Template parsing: compare attribute resolution for timeSeries/profile templates
+  - [ ] NetCDF structure: compare dimensions, variables, global attributes
+  - [ ] NetCDF data values: compare variable data arrays (numeric tolerance)
+  - [ ] NetCDF QC flags: compare QC flag arrays (exact match)
+  - [ ] NetCDF metadata: compare variable attributes (units, long_name, etc.)
+  - [ ] Full export: compare byte-level NetCDF outputs (ncdump -h and -v)
+- [ ] **End-to-end pipeline regression tests**
+  - [ ] timeSeries workflow: raw file → MATLAB NetCDF vs Python NetCDF
+  - [ ] profile workflow: raw file → MATLAB NetCDF vs Python NetCDF
+  - [ ] Compare processing logs and diagnostic outputs
+  - [ ] Compare performance metrics (processing time, memory usage)
+- [ ] **Regression test automation**
+  - [ ] Add CI job to run regression suite on representative test files
+  - [ ] Create regression test report generator (HTML/Markdown summary)
+  - [ ] Add regression test status badge to README
+  - [ ] Document regression test execution in developer guide
+  - [ ] Create script to update regression baselines when MATLAB code changes
+- [ ] **Known differences documentation**
+  - [ ] Document intentional differences (e.g., Python gsw API vs MATLAB)
+  - [ ] Document acceptable numeric precision differences
+  - [ ] Document any behavioral improvements in Python port
+  - [ ] Create migration guide for users transitioning from MATLAB
 
 ## Bookend update (2026-02-17)
 - [x] Verified local Dash UI launch with optional `ui` dependencies.
