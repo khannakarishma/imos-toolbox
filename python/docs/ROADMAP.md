@@ -203,6 +203,11 @@ This section is the canonical setup guide for contributors working on the Python
 - [ ] Add CLI options for DDB connection settings
 - [ ] Add CLI options for template and export settings
 - [ ] Add CLI options to select export targets (NetCDF, Parquet, Zarr where applicable)
+- [ ] Implement JSON deployment input file parser (SFR §2)
+- [ ] Implement JSON schema validation for input file packages (SFR §4.1)
+- [ ] Implement input file package ingestion (zip → parse → validate) (SFR §5.1)
+- [ ] Implement save/resume processing state (SFR §8)
+- [ ] Implement reprocessing from archived inputs (SFR §7)
 - [x] Add CLI options for log/diagnostic output
 
 ## Phase 7 - Dash web UI
@@ -239,6 +244,8 @@ This section is the canonical setup guide for contributors working on the Python
 - [ ] Add user and developer docs
 - [ ] Add migration notes from MATLAB
 - [ ] Publish first alpha release to PyPI
+- [ ] Publish JSON deployment input file schema for Facility operators (SFR §8)
+- [ ] Document known differences from MATLAB outputs (SFR §1)
 
 ## Phase 10 - Regression testing against MATLAB
 **Note**: See `MCR_REGRESSION_PLAN.md` for detailed MCR-based testing strategy (recommended approach - no MATLAB license required).
@@ -319,6 +326,58 @@ This section is the canonical setup guide for contributors working on the Python
   - [ ] Document acceptable numeric precision differences
   - [ ] Document any behavioral improvements in Python port
   - [ ] Create migration guide for users transitioning from MATLAB
+
+## Phase 11 - SFR Integration Requirements
+*Items derived from the IMOS Toolbox Software Functional Requirements document.*
+
+### Input File Package Handling
+- [ ] Define and publish JSON deployment metadata schema (SFR §2, §8)
+- [ ] Build input file package validator (file count, extensions, naming conventions) (SFR §4.1)
+- [ ] CSV schema checker for ancillary data (SFR §4.1 — work in progress upstream)
+- [ ] Support SBE19plus zip input packages (xmlcon + json + hex + XML) (SFR §4.3)
+- [ ] Support NRS multi-instrument zip packages (SBE56 + SBE39 + SBE37 + Signature) (SFR §4.3)
+
+### Data Lineage & Provenance
+- [ ] Archive all input files alongside NetCDF outputs (SFR §5.1)
+- [ ] Generate processing manifest (inputs, versions, parameters, timestamps) (SFR §1)
+- [ ] Implement automatic versioning (hash-based or semantic) for outputs (SFR Appendix Table 1)
+- [ ] Record full processing chain: raw → processed → QC'd with version refs (SFR Appendix Table 1)
+
+### Reprocessing & Reproducibility
+- [ ] Support reprocessing from versioned Processing Input Files (SFR §1)
+- [ ] Apply existing QC flags on reprocessing (e.g. compass error → reprocess, keep expert flags) (SFR UC13)
+- [ ] Support dropping timeseries: process ADCP now, CTD later, merge (SFR UC8)
+- [ ] Handle metadata divergence on reprocessing (station rename scenarios) (SFR UC11)
+
+### User Cases Validation
+- [ ] UC1: Single CTD cast processing
+- [ ] UC2: Forgotten aqualogger from prior mooring
+- [ ] UC3: Updated calibration file → reprocess CTDs
+- [ ] UC4: ADCP with new magnetic declination
+- [ ] UC5: Entire CTD cast trip (batch + transect visualisation)
+- [ ] UC6: Full NRS mooring package (CTD + ADCP + loggers)
+- [ ] UC7: Single mooring instrument (e.g. ADCP)
+- [ ] UC8: Dropping timeseries (ADCP now, CTD later)
+- [ ] UC9: Reprocess with time history
+- [ ] UC10: Multi-operator, multi-instrument mooring
+- [ ] UC12: QC changes start/end dates
+- [ ] UC13: Compass error reprocess keeping expert QC
+- [ ] UC14: NRS mooring vs CTD profile comparison
+
+### Output & Archival
+- [ ] Generate static plots per instrument (depth comparison, T-S diagrams) (SFR §5.1)
+- [ ] Output one NetCDF per instrument deployed (FV00/FV01) (SFR §5.1)
+- [ ] Support AODN file naming conventions and validation (SFR §4.1)
+- [ ] Implement calibration plugin architecture (SFR Appendix Table 1)
+
+### Suggested Architecture Alignment (SFR Supplementary Text 1)
+- [x] `imos_toolbox.parsers` ↔ imos.io (Parsers for raw files)
+- [x] `imos_toolbox.preprocessing` ↔ imos.processing (unit conversion, TEOS-10, transforms)
+- [x] `imos_toolbox.autoqc` ↔ imos.qc (Automatic QC checks)
+- [x] `imos_toolbox.export` ↔ imos.export (NetCDF outputs)
+- [x] `imos_toolbox.model` ↔ imos.models (Schemas for metadata, variables, QC flags)
+- [x] `imos_toolbox.cli` ↔ imos.cli (Unified CLI)
+- [ ] `imos_toolbox.visualisation` ↔ imos.visualisation (pre-submission visual check)
 
 ## Bookend update (2026-02-17)
 - [x] Verified local Dash UI launch with optional `ui` dependencies.
