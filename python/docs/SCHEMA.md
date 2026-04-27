@@ -6,6 +6,14 @@
 > below is therefore **inferred from every `executeQuery` call-site, NetCDF
 > template tokens, and Java test fixtures** in the repository.
 
+The machine-readable Python representation now lives in
+`src/imos_toolbox/ddb/schema.py`. It exposes the same inferred schema as:
+
+- SQLAlchemy `MetaData` / `Table` objects for Alembic-compatible database management
+- JSON-serializable schema documents
+- database-agnostic DDL text
+- generated JSON Schema documents and validation helpers
+
 ---
 
 ## Entity-Relationship Diagram (Mermaid)

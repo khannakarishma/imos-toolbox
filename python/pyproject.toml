@@ -28,6 +28,8 @@ dependencies = [
   "netCDF4>=1.6",
   "gsw>=3.6",
   "seabird>=0.12",
+  "SQLAlchemy>=2.0",
+  "jsonschema>=4.23",
 ]
 
 [project.optional-dependencies]

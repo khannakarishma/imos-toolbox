@@ -441,3 +441,12 @@ This section is the canonical setup guide for contributors working on the Python
 - [x] Added 3 pipeline integration tests (end-to-end, skip-pp, skip-qc).
 - [x] All quality gates passing: 151 tests green, ruff clean, mypy clean.
 - [x] **Complete end-to-end workflow now functional** — users can process raw files to IMOS NetCDF in one command.
+
+## Bookend update (2026-04-27)
+- [x] Captured the inferred deployment database schema from `docs/SCHEMA.md` in a canonical `imos_toolbox.ddb.schema` module.
+- [x] Added one-source-of-truth schema derivations for SQLAlchemy/Alembic-compatible `MetaData`, JSON serialization, database-agnostic DDL, and JSON Schema validation.
+- [x] Added `imos_toolbox.ddb` public exports plus coverage for metadata structure, serialization, DDL rendering, and row/database payload validation.
+- [x] Added `SQLAlchemy` and `jsonschema` dependencies and updated `docs/SCHEMA.md` to point to the runtime schema module.
+- [x] Verified the new schema tests and full pytest suite (`156` passing) after the schema integration.
+- [ ] Next session: wire `[ddb ...]` template token resolution and DDB access flows against the canonical schema model.
+- [ ] Repository-wide `ruff` and `mypy` are still blocked by pre-existing `src/imos_toolbox/cli.py` issues unrelated to this schema checkpoint.
