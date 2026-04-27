@@ -157,6 +157,10 @@ This section is the canonical setup guide for contributors working on the Python
 - [ ] Implement teledyneSetQC (ADCP-specific, lower priority)
 - [ ] Implement imosHistoricalManualSetQC (lower priority)
 - [x] Port spike classifiers (Hampel implemented)
+- [ ] Add `ioos_qc` adapter layer for overlapping automatic QC routines while preserving IMOS Set 1 flags and upgrade-only merge semantics
+- [ ] Reuse overlapping `ioos_qc` automations where semantics align (`qartod.gross_range_test`, `qartod.rate_of_change_test`, `qartod.spike_test`, `qartod.flat_line_test`, `qartod.density_inversion_test`, `qartod.climatology_test`, `qartod.location_test`, `axds.valid_range_test`)
+- [ ] Keep IMOS-native implementations for routines with no `ioos_qc` equivalent or materially different behaviour (`imosSalinityFromPTQC`, `CTDSurfaceSoakQC`, `imosSurfaceDetectionByDepthSetQC`, ADCP set QC)
+- [ ] Use `IOOS_QC_IMOS_QC_OVERLAP.md` as the decision log for `ioos_qc` reuse vs IMOS-specific QC implementations
 
 ## Phase 5 - NetCDF/Parquet/Zarr export
 - [x] Implement NetCDF template parser
@@ -188,6 +192,7 @@ This section is the canonical setup guide for contributors working on the Python
 - [ ] Port triaxys_attributes template
 - [ ] Port triaxys_qc_attributes template
 - [ ] Port platform-specific templates (Aurora, Rehua, Saxon_onward, default)
+- [ ] Evaluate `ioos_qc.stores.PandasStore` and `ioos_qc.stores.CFNetCDFStore` for QC-result I/O, ancillary-variable wiring, and intermediate QC exports where they do not conflict with IMOS NetCDF requirements
 
 ## Phase 6 - Pipeline and CLI
 - [x] Implement import manager
@@ -209,6 +214,8 @@ This section is the canonical setup guide for contributors working on the Python
 - [ ] Implement save/resume processing state (SFR §8)
 - [ ] Implement reprocessing from archived inputs (SFR §7)
 - [x] Add CLI options for log/diagnostic output
+- [ ] Add `IMOSDataset` / xarray adapters over `ioos_qc.streams.XarrayStream` and `ioos_qc.streams.NetcdfStream` for automated QC input handling where stream semantics overlap
+- [ ] Add `ioos_qc.config.Config`-driven QC pipeline entrypoints for overlap cases so shared thresholds/configuration can be reused instead of duplicated
 
 ## Phase 7 - Dash web UI
 - [x] Scaffold Dash app and layout
@@ -239,10 +246,12 @@ This section is the canonical setup guide for contributors working on the Python
 - [ ] Add Parquet regression tests (including metadata round-trip checks)
 - [ ] Add Zarr regression tests for eligible multidimensional datasets (including metadata round-trip checks)
 - [ ] Add CI checks (lint, typecheck, tests)
+- [ ] Add parity tests for `ioos_qc`-backed QC adapters to confirm IMOS flag mapping and upgrade-only merge behaviour on overlapping checks
 
 ## Phase 9 - Documentation and release
 - [ ] Add user and developer docs
 - [ ] Add migration notes from MATLAB
+- [ ] Add migration notes describing `ioos_qc` reuse boundaries, QARTOD-to-IMOS flag mapping, and the IMOS-only QC paths that remain custom
 - [ ] Publish first alpha release to PyPI
 - [ ] Publish JSON deployment input file schema for Facility operators (SFR §8)
 - [ ] Document known differences from MATLAB outputs (SFR §1)
