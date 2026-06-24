@@ -25,6 +25,7 @@ This matrix tracks parser-to-format coverage in the Python port and is backed by
 | Starmon DST | `parse-starmon-dst` | `.dat` |
 | YSI 6-Series | `parse-ysi6` | `.dat` (binary) |
 | Sensus Ultra | `parse-sensus-ultra` | `.csv` |
+| NetCDF Re-import | `parse-netcdf` | `.nc`, `.netcdf` |
 
 ## Notes
 - Current tests validate command registration and extension-gating behavior for

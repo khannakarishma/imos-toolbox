@@ -8,6 +8,7 @@ from imos_toolbox.parsers import (
     AquatecParser,
     ECOBB9Parser,
     ECOTripletParser,
+    NetCDFReimportParser,
     NIWAParser,
     RCMParser,
     SBE19Parser,
@@ -47,6 +48,7 @@ from imos_toolbox.parsers import (
         (StarmonMiniParser, [".dat"]),
         (StarmonDSTParser, [".dat"]),
         (YSI6SeriesParser, [".dat"]),
+        (NetCDFReimportParser, [".nc"]),
     ],
 )
 def test_parser_rejects_unsupported_extensions(
@@ -88,6 +90,7 @@ def test_parser_rejects_unsupported_extensions(
         ("parse-starmon-mini",),
         ("parse-starmon-dst",),
         ("parse-ysi6",),
+        ("parse-netcdf",),
     ],
 )
 def test_parser_commands_exist(command_name: str) -> None:

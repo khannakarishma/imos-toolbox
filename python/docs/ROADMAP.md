@@ -98,7 +98,7 @@ This section is the canonical setup guide for contributors working on the Python
 - [ ] Implement Infinity SD Logger parser
 - [x] Implement RCM parser
 - [x] Implement YSI 6-Series parser
-- [ ] Implement NetCDF re-import parser
+- [x] Implement NetCDF re-import parser
 - [ ] Port GenericParser framework
 
 ## Phase 3 - Preprocessing

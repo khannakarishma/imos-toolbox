@@ -30,6 +30,7 @@ dependencies = [
   "seabird>=0.12",
   "SQLAlchemy>=2.0",
   "jsonschema>=4.23",
+  "setuptools>=82.0.0",
 ]
 
 [project.optional-dependencies]

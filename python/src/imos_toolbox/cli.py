@@ -12,6 +12,7 @@ from imos_toolbox.parsers import (
     DR1050Parser,
     ECOBB9Parser,
     ECOTripletParser,
+    NetCDFReimportParser,
     ParserRegistry,
     NIWAParser,
     RCMParser,
@@ -374,6 +375,20 @@ def parse_rcm_cmd(file_path: Path, mode: str) -> None:
 def parse_ysi6_cmd(file_path: Path, mode: str) -> None:
     """Parse one YSI 6-Series binary DAT file and print summary."""
     parser = YSI6SeriesParser()
+    dataset = parser.parse([file_path], mode)
+    xds = dataset.to_xarray()
+
+    click.echo(f"file={file_path}")
+    click.echo(f"variables={len(xds.data_vars)}")
+    click.echo(f"dimensions={dict(xds.dims)}")
+
+
+@main.command("parse-netcdf")
+@click.option("--file", "file_path", required=True, type=click.Path(path_type=Path, exists=True))
+@click.option("--mode", default="timeSeries", show_default=True)
+def parse_netcdf_cmd(file_path: Path, mode: str) -> None:
+    """Re-import an IMOS-compliant NetCDF file and print summary."""
+    parser = NetCDFReimportParser()
     dataset = parser.parse([file_path], mode)
     xds = dataset.to_xarray()
 

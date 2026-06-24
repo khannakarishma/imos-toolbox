@@ -141,12 +141,20 @@ def parse_eco_triplet_raw(source_file: Path, device: ECODeviceInfo, mode: str, p
         raise ValueError(f"No valid ECO raw samples found in {source_file}")
 
     values_by_var: dict[str, np.ndarray] = {}
+    cal_attrs_by_var: dict[str, dict] = {}
     for idx in range(2, n_columns):
-        var_name, converted = convert_eco_raw_var(device.columns[idx], np.asarray(samples[idx], dtype=float))
+        var_name, converted, cal_attrs = convert_eco_raw_var(device.columns[idx], np.asarray(samples[idx], dtype=float))
         if var_name:
             values_by_var[var_name] = converted
+            if cal_attrs:
+                cal_attrs_by_var[var_name] = cal_attrs
 
-    return _build_dataset(source_file, mode, parser_name, device, times, values_by_var, "raw")
+    result = _build_dataset(source_file, mode, parser_name, device, times, values_by_var, "raw")
+    # Attach calibration attributes (mirrors MATLAB convertECOrawVar)
+    for vn, ca in cal_attrs_by_var.items():
+        if vn in result.dataset.data_vars:
+            result.dataset[vn].attrs.update(ca)
+    return result
 
 
 def parse_ecobb9_raw(source_file: Path, device: ECODeviceInfo, mode: str, parser_name: str) -> IMOSDataset:
@@ -188,12 +196,19 @@ def parse_ecobb9_raw(source_file: Path, device: ECODeviceInfo, mode: str, parser
     ]
 
     values_by_var: dict[str, np.ndarray] = {}
+    cal_attrs_by_var: dict[str, dict] = {}
     for idx in range(1, n_columns):
-        var_name, converted = convert_eco_raw_var(device.columns[idx], np.asarray(samples[idx], dtype=float))
+        var_name, converted, cal_attrs = convert_eco_raw_var(device.columns[idx], np.asarray(samples[idx], dtype=float))
         if var_name:
             values_by_var[var_name] = converted
+            if cal_attrs:
+                cal_attrs_by_var[var_name] = cal_attrs
 
-    return _build_dataset(source_file, mode, parser_name, device, times, values_by_var, "raw")
+    result = _build_dataset(source_file, mode, parser_name, device, times, values_by_var, "raw")
+    for vn, ca in cal_attrs_by_var.items():
+        if vn in result.dataset.data_vars:
+            result.dataset[vn].attrs.update(ca)
+    return result
 
 
 def parse_wetstar_raw(source_file: Path, device: ECODeviceInfo, mode: str, parser_name: str) -> IMOSDataset:
@@ -224,33 +239,70 @@ def parse_wetstar_raw(source_file: Path, device: ECODeviceInfo, mode: str, parse
         ]
 
     column = device.columns[0] if device.columns else ECOColumn(type="CHL")
-    var_name, converted = convert_eco_raw_var(column, np.asarray(samples, dtype=float))
+    var_name, converted, cal_attrs = convert_eco_raw_var(column, np.asarray(samples, dtype=float))
     values_by_var = {var_name: converted} if var_name else {}
 
-    return _build_dataset(source_file, mode, parser_name, device, times, values_by_var, "raw")
+    result = _build_dataset(source_file, mode, parser_name, device, times, values_by_var, "raw")
+    if var_name and cal_attrs and var_name in result.dataset.data_vars:
+        result.dataset[var_name].attrs.update(cal_attrs)
+    return result
 
 
-def convert_eco_raw_var(column: ECOColumn, sample: np.ndarray) -> tuple[str, np.ndarray]:
+def convert_eco_raw_var(column: ECOColumn, sample: np.ndarray) -> tuple[str, np.ndarray, dict]:
+    """Convert raw ECO counts to engineering units.
+    
+    Mirrors MATLAB convertECOrawVar.m including calibration attributes.
+    
+    Returns:
+        Tuple of (imos_name, converted_data, calibration_attrs)
+        calibration_attrs mirrors MATLAB calibration struct attached to variables.
+    """
     column_type = column.type.upper()
 
     if column_type in {"N/U", "DATE", "TIME", "DKDC"}:
-        return "", np.array([])
+        return "", np.array([]), {}
 
     if column_type == "PAR" and column.im is not None and column.a0 is not None and column.a1 is not None:
         data = column.im * np.power(10.0, (sample - column.a0) / column.a1)
-        return "PAR", data
+        cal_attrs = {
+            "calibration_formula": (
+                "value_engineering_units = calibration_im x "
+                "10^((counts - calibration_a0) x calibration_a1)"
+            ),
+            "calibration_im": column.im,
+            "calibration_a0": column.a0,
+            "calibration_a1": column.a1,
+        }
+        return "PAR", data, cal_attrs
 
     if column_type == "CHL":
-        return "CPHL", _scale_offset(sample, column)
+        return "CPHL", _scale_offset(sample, column), _cal_attrs(column)
     if column_type == "CDOM":
-        return "CDOM", _scale_offset(sample, column)
+        return "CDOM", _scale_offset(sample, column), _cal_attrs(column)
     if column_type == "NTU":
-        return "TURB", _scale_offset(sample, column)
+        return "TURB", _scale_offset(sample, column), _cal_attrs(column)
     if column_type == "LAMBDA":
         wavelength = int(column.meas_wavelength) if column.meas_wavelength is not None else 0
-        return f"VSF{wavelength}", _scale_offset(sample, column)
+        return f"VSF{wavelength}", _scale_offset(sample, column), _cal_attrs(column)
+    if column_type in ("PHYCOERYTHRIN", "PHYCOCYANIN", "URANINE", "RHODAMINE"):
+        return f"ECO3_{column_type}", _scale_offset(sample, column), _cal_attrs(column)
 
-    return f"ECO3_{column_type}", _scale_offset(sample, column)
+    return f"ECO3_{column_type}", _scale_offset(sample, column), {}
+
+
+def _cal_attrs(column: ECOColumn) -> dict:
+    """Build calibration attribute dict (mirrors MATLAB calibration struct)."""
+    attrs = {
+        "calibration_formula": (
+            "value_engineering_units = (counts - calibration_dark_count) "
+            "x calibration_scale_factor"
+        ),
+    }
+    if column.offset is not None:
+        attrs["calibration_dark_count"] = column.offset
+    if column.scale is not None:
+        attrs["calibration_scale_factor"] = column.scale
+    return attrs
 
 
 def _scale_offset(values: np.ndarray, column: ECOColumn) -> np.ndarray:
@@ -271,25 +323,76 @@ def _build_dataset(
     values_by_var: dict[str, np.ndarray],
     source_format: str,
 ) -> IMOSDataset:
+    """Build IMOS-compliant ECO dataset.
+    
+    Mirrors MATLAB readECOraw.m dataset assembly including:
+    - TIME as dimension
+    - Scaffold variables
+    - Burst detection (instrument_burst_interval, burst_duration)
+    - Calibration attributes on variables
+    - coordinates attribute
+    """
+    time_arr = np.asarray(times, dtype=float)
     dataset = IMOSDataset.empty()
-    obs_dim = "obs"
-    dataset.add_dimension(obs_dim, np.arange(len(times)))
-    dataset.add_variable(name="TIME", data=np.asarray(times, dtype=float), dims=[obs_dim])
+    dataset.add_dimension("TIME", time_arr)
+
+    # Scaffold variables (IMOS compliance, mirrors MATLAB)
+    dataset.add_variable("TIMESERIES", data=np.int32(1), dims=[])
+    dataset.add_variable("LATITUDE", data=np.float64(np.nan), dims=[])
+    dataset.add_variable("LONGITUDE", data=np.float64(np.nan), dims=[])
+    dataset.add_variable("NOMINAL_DEPTH", data=np.float32(np.nan), dims=[])
 
     for var_name, values in values_by_var.items():
-        dataset.add_variable(name=var_name, data=values, dims=[obs_dim])
+        dataset.add_variable(name=var_name, data=values, dims=["TIME"],
+                             attrs={"coordinates": "TIME LATITUDE LONGITUDE NOMINAL_DEPTH"})
 
-    dataset.set_attrs(
-        {
-            "toolbox_input_file": str(source_file),
-            "featureType": mode,
-            "instrument_make": "WET Labs",
-            "instrument_model": device.instrument or "ECO",
-            "instrument_serial_no": device.serial,
-            "parser": parser_name,
-            "source_format": source_format,
-        }
-    )
+    # Burst detection (mirrors MATLAB readECOraw.m burst logic)
+    sample_interval = float("nan")
+    burst_interval = float("nan")
+    burst_duration = float("nan")
+    if len(time_arr) > 1:
+        sample_interval = float(np.median(np.diff(time_arr) * 24 * 3600))
+        # Burst boundary: gap > sample_interval (in days)
+        dt = np.diff(time_arr)
+        threshold = sample_interval / (24.0 * 3600.0)  # convert seconds back to days
+        burst_starts = np.where(dt > threshold)[0] + 1
+        burst_starts = np.concatenate([[0], burst_starts, [len(time_arr)]])
+        
+        n_bursts = len(burst_starts) - 1
+        if n_bursts > 1:
+            first_times = []
+            durations = []
+            for i in range(n_bursts):
+                burst_time = time_arr[burst_starts[i]:burst_starts[i + 1]]
+                if len(burst_time) > 1:
+                    si = float(np.median(np.diff(burst_time) * 24 * 3600))
+                    first_times.append(burst_time[0])
+                    durations.append(
+                        (burst_time[-1] - burst_time[0]) * 24 * 3600 + si
+                    )
+            if len(first_times) > 1:
+                burst_interval = round(
+                    float(np.median(np.diff(np.array(first_times)) * 24 * 3600))
+                )
+            if durations:
+                burst_duration = round(float(np.median(durations)))
+
+    attrs: dict = {
+        "toolbox_input_file": str(source_file),
+        "featureType": mode,
+        "instrument_make": "WET Labs",
+        "instrument_model": device.instrument or "ECO",
+        "instrument_serial_no": device.serial,
+        "instrument_sample_interval": sample_interval,
+        "parser": parser_name,
+        "source_format": source_format,
+    }
+    if not np.isnan(burst_interval):
+        attrs["instrument_burst_interval"] = burst_interval
+    if not np.isnan(burst_duration):
+        attrs["instrument_burst_duration"] = burst_duration
+
+    dataset.set_attrs(attrs)
 
     return dataset
 

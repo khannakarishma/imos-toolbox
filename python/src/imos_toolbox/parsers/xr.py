@@ -143,7 +143,7 @@ def _parse_classic_xr(source_file: Path, mode: str, parser_name: str) -> IMOSDat
     if len(time_values) > 1:
         attrs["instrument_sample_interval"] = float(np.median(np.diff(time_values)) * 24.0 * 3600.0)
 
-    return _build_dataset(time_values, values_by_var, attrs)
+    return _build_dataset(time_values, values_by_var, attrs, mode)
 
 
 def _parse_ruskin_xr(source_file: Path, mode: str, parser_name: str) -> IMOSDataset:
@@ -223,7 +223,7 @@ def _parse_ruskin_xr(source_file: Path, mode: str, parser_name: str) -> IMOSData
     if len(times) > 1:
         attrs["instrument_sample_interval"] = float(np.median(np.diff(np.asarray(times, dtype=float))) * 24.0 * 3600.0)
 
-    return _build_dataset(np.asarray(times, dtype=float), values_by_var, attrs)
+    return _build_dataset(np.asarray(times, dtype=float), values_by_var, attrs, mode)
 
 
 def _parse_classic_header(lines: list[str]) -> dict[str, str | float]:
@@ -387,21 +387,115 @@ def _build_classic_time_vector(header: dict[str, str | float], n_samples: int) -
     return np.linspace(start, end, n_samples, dtype=float)
 
 
-def _build_dataset(time_values: np.ndarray, values_by_var: dict[str, np.ndarray], attrs: dict[str, str | float]) -> IMOSDataset:
+def _build_dataset(time_values: np.ndarray, values_by_var: dict[str, np.ndarray], attrs: dict[str, str | float], mode: str = "timeSeries") -> IMOSDataset:
+    """Build XR dataset. Supports both timeSeries and profile modes.
+    
+    Profile mode mirrors MATLAB readXR420/readXR620 profile logic:
+    ascending/descending split using depth/pressure max, MAXZ dimension.
+    """
+    if mode == "profile":
+        return _build_profile_dataset_xr(time_values, values_by_var, attrs)
+    
     dataset = IMOSDataset.empty()
-    obs_dim = "obs"
-    dataset.add_dimension(obs_dim, np.arange(len(time_values)))
-    dataset.add_variable(name="TIME", data=np.asarray(time_values, dtype=float), dims=[obs_dim])
+    dataset.add_dimension("TIME", np.asarray(time_values, dtype=float))
     dataset.add_variable(name="TIMESERIES", data=np.asarray(1, dtype=np.int32), dims=[])
     dataset.add_variable(name="LATITUDE", data=np.asarray(np.nan, dtype=float), dims=[])
     dataset.add_variable(name="LONGITUDE", data=np.asarray(np.nan, dtype=float), dims=[])
     dataset.add_variable(name="NOMINAL_DEPTH", data=np.asarray(np.nan, dtype=float), dims=[])
 
+    coords = "TIME LATITUDE LONGITUDE NOMINAL_DEPTH"
     for var_name, values in values_by_var.items():
         if len(values) < len(time_values):
             values = np.concatenate([values, np.full(len(time_values) - len(values), np.nan)])
-        dataset.add_variable(name=var_name, data=np.asarray(values[: len(time_values)], dtype=float), dims=[obs_dim])
+        dataset.add_variable(name=var_name, data=np.asarray(values[: len(time_values)], dtype=float),
+                             dims=["TIME"], attrs={"coordinates": coords})
 
+    dataset.set_attrs(attrs)
+    return dataset
+
+
+def _build_profile_dataset_xr(
+    time_values: np.ndarray,
+    values_by_var: dict[str, np.ndarray],
+    attrs: dict[str, str | float],
+) -> IMOSDataset:
+    """Build XR profile dataset with ascending/descending split.
+    
+    Mirrors MATLAB readXR420/readXR620 profile mode:
+    - Find depth/pressure variable
+    - Split at depth maximum into descending/ascending
+    - Create MAXZ × PROFILE dimensions
+    - Pad shorter profile with NaN
+    """
+    # Find Z variable (DEPTH first, then PRES_REL/PRES)
+    z_data = None
+    z_name = None
+    for name in ("DEPTH", "PRES_REL", "PRES"):
+        if name in values_by_var:
+            z_data = np.asarray(values_by_var[name], dtype=float)
+            z_name = name
+            break
+    
+    if z_data is None:
+        raise ValueError("No pressure or depth variable for profile mode")
+    
+    n_data = len(z_data)
+    z_max = np.nanmax(z_data)
+    pos_z_max = int(np.where(z_data == z_max)[0][-1])  # last occurrence of max
+    
+    # Descending: 0..pos_z_max, Ascending: pos_z_max+1..end
+    is_descending = np.zeros(n_data, dtype=bool)
+    is_descending[:pos_z_max + 1] = True
+    
+    n_d = int(np.sum(is_descending))
+    n_a = int(np.sum(~is_descending))
+    max_z = max(n_d, n_a)
+    
+    dataset = IMOSDataset.empty()
+    
+    if n_a == 0:
+        # Single profile (descending only)
+        depth_data = z_data if z_name == "DEPTH" else z_data - 10.1325  # PRES → approx depth
+        dataset.add_dimension("DEPTH", depth_data)
+        dataset.add_variable("PROFILE", data=np.int32(1), dims=[])
+        dataset.add_variable("TIME", data=np.float64(time_values[0]), dims=[],
+                             attrs={"comment": "First value over profile measurement."})
+        dataset.add_variable("DIRECTION", data="D", dims=[])
+        dataset.add_variable("LATITUDE", data=np.float64(np.nan), dims=[])
+        dataset.add_variable("LONGITUDE", data=np.float64(np.nan), dims=[])
+        dataset.add_variable("BOT_DEPTH", data=np.float64(np.nan), dims=[],
+                             attrs={"comment": "Bottom depth measured by ship-based acoustic sounder."})
+        
+        for var_name, values in values_by_var.items():
+            if var_name == z_name:
+                continue
+            dataset.add_variable(var_name, data=np.asarray(values, dtype=float), dims=["DEPTH"])
+    else:
+        # Two profiles: descending + ascending
+        dataset.add_dimension("MAXZ", np.arange(1, max_z + 1, dtype=float))
+        dataset.add_dimension("PROFILE", np.array([1.0, 2.0]))
+        
+        # TIME per profile
+        desc_time = time_values[is_descending][0] if n_d > 0 else np.nan
+        asc_time = time_values[~is_descending][0] if n_a > 0 else np.nan
+        dataset.add_variable("TIME", data=np.array([desc_time, asc_time]),
+                             dims=["PROFILE"],
+                             attrs={"comment": "First value over profile measurement."})
+        dataset.add_variable("DIRECTION", data=np.array(["D", "A"]), dims=["PROFILE"])
+        dataset.add_variable("LATITUDE", data=np.array([np.nan, np.nan]), dims=["PROFILE"])
+        dataset.add_variable("LONGITUDE", data=np.array([np.nan, np.nan]), dims=["PROFILE"])
+        dataset.add_variable("BOT_DEPTH", data=np.array([np.nan, np.nan]), dims=["PROFILE"],
+                             attrs={"comment": "Bottom depth measured by ship-based acoustic sounder."})
+        
+        # Pad each variable to [MAXZ × PROFILE]
+        for var_name, values in values_by_var.items():
+            v = np.asarray(values, dtype=float)
+            desc_vals = np.concatenate([v[is_descending], np.full(max_z - n_d, np.nan)])
+            asc_vals = np.concatenate([v[~is_descending], np.full(max_z - n_a, np.nan)])
+            data_2d = np.column_stack([desc_vals, asc_vals])
+            dataset.add_variable(var_name, data=data_2d, dims=["MAXZ", "PROFILE"])
+    
+    attrs["featureType"] = "profile"
     dataset.set_attrs(attrs)
     return dataset
 

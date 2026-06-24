@@ -40,9 +40,7 @@ class DR1050Parser(BaseParser):
         times = _build_time_vector(header, n_samples)
 
         dataset = IMOSDataset.empty()
-        obs_dim = "obs"
-        dataset.add_dimension(obs_dim, np.arange(n_samples))
-        dataset.add_variable(name="TIME", data=np.asarray(times, dtype=float), dims=[obs_dim])
+        dataset.add_dimension("TIME", np.asarray(times, dtype=float))
         dataset.add_variable(name="TIMESERIES", data=np.asarray(1, dtype=np.int32), dims=[])
         dataset.add_variable(name="LATITUDE", data=np.asarray(np.nan, dtype=float), dims=[])
         dataset.add_variable(name="LONGITUDE", data=np.asarray(np.nan, dtype=float), dims=[])
@@ -51,7 +49,8 @@ class DR1050Parser(BaseParser):
         pres_idx = _find_column_index(columns, "Pres")
         if pres_idx is not None:
             pres_values = np.asarray([row[pres_idx] for row in samples], dtype=float)
-            dataset.add_variable(name="PRES", data=pres_values, dims=[obs_dim])
+            dataset.add_variable(name="PRES", data=pres_values, dims=["TIME"],
+                                 attrs={"coordinates": "TIME LATITUDE LONGITUDE NOMINAL_DEPTH"})
 
         attrs = {
             "toolbox_input_file": str(source_file),
