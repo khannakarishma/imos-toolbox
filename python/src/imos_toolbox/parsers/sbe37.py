@@ -168,7 +168,7 @@ def _parse_sbe37_dat_hex(
         if var_name == 'TIME':
             continue
         
-        attrs = {'coordinates': coordinates}
+        attrs: dict[str, Any] = {'coordinates': coordinates}
         
         # Add applied offset for pressure
         # Mirrors: if strncmp('PRES_REL', vars{k}, 8)

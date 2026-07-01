@@ -191,8 +191,7 @@ def _read_burst_average_v3(data: np.ndarray, idx: int) -> dict:
     is_amplitude = bool(config & (1 << 6))
     is_correlation = bool(config & (1 << 7))
     is_altimeter = bool(config & (1 << 8))
-    is_ast = bool(config & (1 << 10))
-    
+
     sect["Configuration"] = config
     sect["SerialNumber"] = _read_u32(data, idx + 4)
     sect["Time"] = _read_clock_data(data, idx + 8)

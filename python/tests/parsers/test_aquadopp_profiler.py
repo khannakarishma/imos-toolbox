@@ -16,7 +16,7 @@ when no files are present.
 
 import pytest
 from pathlib import Path
-from imos_toolbox.parsers.aquadopp_profiler import AquadoppProfilerParser
+from imos_toolbox.parsers.aquadopp_profiler import AquadoppProfilerParser, _decode_power_level
 import numpy as np
 
 TEST_DATA_DIR = Path(__file__).parent / "data" / "Nortek" / "aquadopp_profile"
@@ -142,6 +142,7 @@ class TestAquadoppProfilerParser:
 
         assert attrs["instrument_make"] == "Nortek"
         assert "Aquadopp Profiler" in attrs["instrument_model"]
+        assert attrs["power_level"] in {"HIGH", "HIGH-", "LOW+", "LOW"}
 
     def test_coordinates_attribute(self, parser, test_files):
         """Test that 2D data variables carry a coordinates attribute."""
@@ -171,6 +172,22 @@ class TestAquadoppProfilerParser:
         if len(valid) > 0:
             assert np.all(valid > -5), "Temperature too low"
             assert np.all(valid < 40), "Temperature too high"
+
+
+def test_power_level_decode():
+    """TimCtrlReg bits 7:6 decode to the MATLAB power-level strings.
+
+    Mirrors the ``switch`` in aquadoppProfilerParse.m (lines 68-77). Bit 7
+    (value 64) is the most-significant of the 2-bit code; bit 6 (value 32) the
+    least-significant. Unrelated bits must be masked out.
+    """
+    assert _decode_power_level(0) == "HIGH"
+    assert _decode_power_level(32) == "HIGH-"
+    assert _decode_power_level(64) == "LOW+"
+    assert _decode_power_level(96) == "LOW"
+    # Unrelated low/high bits set must not affect the result.
+    assert _decode_power_level(0b1010101) == "LOW+"
+    assert _decode_power_level(0b1111111111) == "LOW"
 
 
 def test_print_test_file_info():

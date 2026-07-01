@@ -74,13 +74,13 @@ This section is the canonical setup guide for contributors working on the Python
 - [x] Implement SBE39 parser
 - [x] Implement SBE56 parser
 - [x] Implement SBE3x shared logic
-- [ ] Implement Workhorse ADCP parser
-- [ ] Implement AWAC parser
-- [ ] Implement Continental parser
-- [ ] Implement Aquadopp Profiler parser
-- [ ] Implement Aquadopp Velocity parser
-- [ ] Implement Signature/AD2CP parser
-- [ ] Implement OceanContour parser
+- [x] Implement Workhorse ADCP parser
+- [x] Implement AWAC parser
+- [x] Implement Continental parser
+- [x] Implement Aquadopp Profiler parser
+- [x] Implement Aquadopp Velocity parser
+- [x] Implement Signature/AD2CP parser
+- [x] Implement OceanContour parser
 - [x] Implement WQM parser
 - [x] Implement WetStar parser
 - [x] Implement ECOBB9 parser
@@ -89,17 +89,17 @@ This section is the canonical setup guide for contributors working on the Python
 - [x] Implement DR1050 parser
 - [x] Implement Vemco parser
 - [x] Implement NIWA parser
-- [ ] Implement NXIC binary parser
+- [x] Implement NXIC binary parser
 - [x] Implement Starmon Mini parser
 - [x] Implement Starmon DST parser
 - [x] Implement Aquatec parser
 - [x] Implement Sensus Ultra parser
-- [ ] Implement Echoview parser
-- [ ] Implement Infinity SD Logger parser
+- [x] Implement Echoview parser
+- [x] Implement Infinity SD Logger parser
 - [x] Implement RCM parser
 - [x] Implement YSI 6-Series parser
 - [x] Implement NetCDF re-import parser
-- [ ] Port GenericParser framework
+- [x] Port GenericParser framework
 
 ## Phase 3 - Preprocessing
 - [x] Add preprocessing base class (`PPRoutine`, `PPResult`) and chain runner (`run_pp_chain`)

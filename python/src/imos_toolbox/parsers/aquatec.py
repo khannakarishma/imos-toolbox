@@ -35,19 +35,35 @@ class AquatecParser(BaseParser):
         if len(time_values) == 0:
             raise ValueError(f"No valid Aquatec rows found in {source_file}")
 
-        dataset = IMOSDataset.empty()
-        obs_dim = "obs"
-        dataset.add_dimension(obs_dim, np.arange(len(time_values)))
-        dataset.add_variable(name="TIME", data=np.asarray(time_values, dtype=float), dims=[obs_dim])
-        dataset.add_variable(name="TIMESERIES", data=np.asarray(1, dtype=np.int32), dims=[])
-        dataset.add_variable(name="LATITUDE", data=np.asarray(np.nan, dtype=float), dims=[])
-        dataset.add_variable(name="LONGITUDE", data=np.asarray(np.nan, dtype=float), dims=[])
-        dataset.add_variable(name="NOMINAL_DEPTH", data=np.asarray(np.nan, dtype=float), dims=[])
+        # Burst-mode averaging (mirrors MATLAB aquatecParse.m)
+        # If instrument is in burst mode and data is not pre-averaged,
+        # group samples into bursts and compute mean per burst.
+        is_burst_mode = "burst" in meta.get("REGIME", "").lower()
+        is_pre_averaged = meta.get("AVERAGED", "").strip().lower() == "yes"
+        samples_per_burst = _get_samples_per_burst(meta)
 
+        if is_burst_mode and not is_pre_averaged and samples_per_burst > 1:
+            time_values, temp_values, pres_values = _burst_average(
+                time_values, temp_values, pres_values, samples_per_burst
+            )
+
+        # Sentinel value: pressure 65535 → NaN (mirrors MATLAB)
+        pres_values[pres_values >= 65535] = np.nan
+
+        dataset = IMOSDataset.empty()
+        dataset.add_dimension("TIME", np.asarray(time_values, dtype=float))
+        dataset.add_variable(name="TIMESERIES", data=np.int32(1), dims=[])
+        dataset.add_variable(name="LATITUDE", data=np.float64(np.nan), dims=[])
+        dataset.add_variable(name="LONGITUDE", data=np.float64(np.nan), dims=[])
+        dataset.add_variable(name="NOMINAL_DEPTH", data=np.float32(np.nan), dims=[])
+
+        coords = "TIME LATITUDE LONGITUDE NOMINAL_DEPTH"
         if temp_values.size > 0 and np.any(np.isfinite(temp_values)):
-            dataset.add_variable(name="TEMP", data=temp_values, dims=[obs_dim])
+            dataset.add_variable(name="TEMP", data=temp_values, dims=["TIME"],
+                                 attrs={"coordinates": coords})
         if pres_values.size > 0 and np.any(np.isfinite(pres_values)):
-            dataset.add_variable(name="PRES", data=pres_values, dims=[obs_dim])
+            dataset.add_variable(name="PRES", data=pres_values, dims=["TIME"],
+                                 attrs={"coordinates": coords})
 
         attrs: dict[str, str | float] = {
             "toolbox_input_file": str(source_file),
@@ -189,3 +205,46 @@ def _datetime_to_matlab_datenum(value: datetime) -> float:
     ordinal = value.toordinal()
     frac = (value - datetime(value.year, value.month, value.day)).total_seconds() / 86400.0
     return ordinal + 366 + frac
+
+
+def _get_samples_per_burst(meta: dict[str, str]) -> int:
+    """Extract samples-per-burst from REGIME field.
+    
+    Mirrors MATLAB aquatecParse.m: parses 'Burst Mode, N samples' from REGIME.
+    """
+    regime = meta.get("REGIME", "")
+    match = re.search(r"(\d+)\s*sample", regime, re.IGNORECASE)
+    if match:
+        return int(match.group(1))
+    return 1
+
+
+def _burst_average(
+    time: np.ndarray,
+    temp: np.ndarray,
+    pres: np.ndarray,
+    samples_per_burst: int,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Average burst samples into single values per burst.
+    
+    Mirrors MATLAB aquatecParse.m burst-mode averaging logic:
+    groups of `samples_per_burst` consecutive samples are averaged
+    into single representative values.
+    """
+    n = len(time)
+    n_bursts = n // samples_per_burst
+    if n_bursts == 0:
+        return time, temp, pres
+    
+    # Trim to complete bursts
+    trim = n_bursts * samples_per_burst
+    time_reshaped = time[:trim].reshape(n_bursts, samples_per_burst)
+    temp_reshaped = temp[:trim].reshape(n_bursts, samples_per_burst)
+    pres_reshaped = pres[:trim].reshape(n_bursts, samples_per_burst)
+    
+    # Mean of each burst (matches MATLAB mean())
+    avg_time = np.nanmean(time_reshaped, axis=1)
+    avg_temp = np.nanmean(temp_reshaped, axis=1)
+    avg_pres = np.nanmean(pres_reshaped, axis=1)
+    
+    return avg_time, avg_temp, avg_pres

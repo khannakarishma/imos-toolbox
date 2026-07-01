@@ -54,7 +54,7 @@ def read_workhorse_wave_ascii(filename: Path) -> dict[str, Any]:
     file_path = Path(filename).parent
     file_name = Path(filename).stem
     
-    wave_data = {}
+    wave_data: dict[str, Any] = {}
     
     # Read summary file (optional)
     summary_file = file_path / f"{file_name}.txt"

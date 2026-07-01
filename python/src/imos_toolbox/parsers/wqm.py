@@ -376,8 +376,6 @@ def _apply_raw_calibrations(header_lines: list[str], by_var: dict[str, list[floa
     Mirrors MATLAB readWQMraw: computes salinity from C/T/P via gsw,
     O2 from SBE-43F formula, CHL/NTU from scale+offset, PAR from log formula.
     """
-    import re
-    
     has_cond = "CNDC" in by_var
     has_temp = "TEMP" in by_var
     has_pres = "PRES_REL" in by_var
@@ -499,7 +497,7 @@ def _load_oxygen_coefs(header_lines: list[str]) -> dict | None:
     """
     import re
     
-    coef_map = {}
+    coef_map: dict[str, float] = {}
     patterns_old = {
         "Soc": r"Soc=\s*([\d.eE+-]+)",
         "FOffset": r"FOffset=\s*([\d.eE+-]+)",

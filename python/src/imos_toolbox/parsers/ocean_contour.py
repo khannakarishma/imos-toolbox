@@ -97,17 +97,18 @@ class OceanContourParser(BaseParser):
         Returns:
             IMOSDataset or list[IMOSDataset] (one per dataset group)
         """
-        import xarray as xr
-
         file_list = [Path(name) for name in filenames]
         if len(file_list) != 1:
             raise ValueError("OceanContour parser expects exactly one input file")
 
         source_file = file_list[0]
-        if source_file.suffix.lower() != ".nc":
-            raise ValueError("OceanContour parser supports .nc files only")
+        if source_file.suffix.lower() not in (".nc", ".mat"):
+            raise ValueError("OceanContour parser supports .nc and .mat files")
 
-        # Open and detect groups. OceanContour NetCDF has /Config and /Data groups.
+        if source_file.suffix.lower() == ".mat":
+            return self._parse_mat(source_file)
+
+        # NetCDF path — OceanContour NetCDF has /Config and /Data groups.
         # Under /Data there are subgroups per acquisition mode (Avg, Burst, etc.)
         try:
             import netCDF4
@@ -147,6 +148,133 @@ class OceanContourParser(BaseParser):
         if len(results) == 1:
             return results[0]
         return results
+
+    def _parse_mat(self, source_file: Path) -> IMOSDataset | list[IMOSDataset]:
+        """Parse OceanContour .mat file.
+        
+        Mirrors MATLAB OceanContour.readOceanContourFile 'mat' branch.
+        Reads MATLAB workspace exports from OceanContour software.
+        Variable names differ from NetCDF (e.g., VelEast vs Vel_East).
+        """
+        try:
+            from scipy.io import loadmat
+        except ImportError:
+            raise ImportError(
+                "OceanContour .mat support requires scipy. "
+                "Install with: uv add scipy"
+            )
+        
+        matdata = loadmat(str(source_file), squeeze_me=True)
+        
+        if "Config" not in matdata:
+            raise ValueError("OceanContour .mat file missing 'Config' field")
+        
+        file_metadata = matdata["Config"]
+        if hasattr(file_metadata, "dtype") and file_metadata.dtype.names:
+            # Convert structured array to dict
+            config = {name: file_metadata[name].item() for name in file_metadata.dtype.names}
+        else:
+            config = {}
+        
+        # Find data groups (fieldnames ending in '_Data')
+        dataset_groups = [k for k in matdata if k.endswith("_Data") and not k.startswith("_")]
+        
+        if not dataset_groups:
+            raise ValueError("OceanContour .mat file has no data groups")
+        
+        results: list[IMOSDataset] = []
+        
+        # .mat variable map (mirrors MATLAB OceanContour.get_varmap 'mat' branch)
+        mat_varmap_2d = {
+            "VelEast": "UCUR",
+            "VelNorth": "VCUR",
+            "VelUp1": "WCUR",
+            "VelUp2": "WCUR_2",
+            "AmpBeam1": "ABSI1",
+            "AmpBeam2": "ABSI2",
+            "AmpBeam3": "ABSI3",
+            "AmpBeam4": "ABSI4",
+            "CorBeam1": "CMAG1",
+            "CorBeam2": "CMAG2",
+            "CorBeam3": "CMAG3",
+            "CorBeam4": "CMAG4",
+        }
+        mat_varmap_1d = {
+            "WaterTemperature": "TEMP",
+            "Pressure": "PRES_REL",
+            "SpeedOfSound": "SSPD",
+            "Battery": "BAT_VOLT",
+            "Pitch": "PITCH",
+            "Roll": "ROLL",
+            "Heading": "HEADING",
+        }
+        
+        for group_key in dataset_groups:
+            group_name = group_key.split("_Data")[0]
+            group_data = matdata[group_key]
+            
+            if not hasattr(group_data, "dtype") or group_data.dtype.names is None:
+                continue
+            
+            # Extract data fields
+            fields = {name: np.asarray(group_data[name].item()) for name in group_data.dtype.names}
+            
+            time = fields.get("MatlabTimeStamp")
+            height = fields.get("Range")
+            if time is None or height is None:
+                continue
+            
+            time = time.ravel()
+            height = height.ravel()
+            
+            dataset = IMOSDataset.empty()
+            dataset.add_dimension("TIME", time)
+            dataset.add_dimension("HEIGHT_ABOVE_SENSOR", height)
+            dataset.add_variable("TIMESERIES", data=np.int32(1), dims=[])
+            dataset.add_variable("LATITUDE", data=np.float64(np.nan), dims=[])
+            dataset.add_variable("LONGITUDE", data=np.float64(np.nan), dims=[])
+            dataset.add_variable("NOMINAL_DEPTH", data=np.float32(np.nan), dims=[])
+            
+            coords_2d = "TIME LATITUDE LONGITUDE HEIGHT_ABOVE_SENSOR"
+            coords_1d = "TIME LATITUDE LONGITUDE NOMINAL_DEPTH"
+            
+            for mat_name, imos_name in mat_varmap_2d.items():
+                if mat_name in fields:
+                    data = fields[mat_name]
+                    if data.ndim == 2:
+                        if data.shape[0] == len(height) and data.shape[1] == len(time):
+                            data = data.T
+                    dataset.add_variable(imos_name, data=data, dims=["TIME", "HEIGHT_ABOVE_SENSOR"],
+                                         attrs={"coordinates": coords_2d})
+            
+            for mat_name, imos_name in mat_varmap_1d.items():
+                if mat_name in fields:
+                    data = fields[mat_name].ravel()
+                    dataset.add_variable(imos_name, data=data, dims=["TIME"],
+                                         attrs={"coordinates": coords_1d})
+            
+            # Metadata
+            instrument_model = str(config.get("Instrument_instrumentName", "Signature"))
+            serial = str(config.get("Instrument_serialNumberDoppler", ""))
+            beam_angle = float(_BEAM_ANGLES.get(instrument_model, 25.0))
+            
+            dataset.set_attrs({
+                "toolbox_input_file": str(source_file),
+                "featureType": "",
+                "instrument_make": "Nortek",
+                "instrument_model": instrument_model,
+                "instrument_serial_no": serial,
+                "beam_angle": beam_angle,
+                "netcdf_group_name": group_name,
+                "parser": self.parser_name,
+            })
+            
+            results.append(dataset)
+        
+        if not results:
+            raise ValueError(f"No valid datasets in .mat file {source_file}")
+        
+        return results if len(results) > 1 else results[0]
 
     def _parse_group(
         self,

@@ -41,6 +41,12 @@ class NetCDFReimportParser(BaseParser):
             # MATLAB datenum('1950-01-01 00:00:00') == 712224
             ds["TIME"] = time_var + IMOS_MATLAB_DATENUM_EPOCH
 
+        # Separate QC variables (*_quality_control) from data variables.
+        # Mirrors MATLAB netcdfParse.m: QC variables are identified by the
+        # '_quality_control' suffix and attached as flags to corresponding
+        # data variables via the QC_SUFFIX naming convention.
+        _separate_qc_flags(ds)
+
         # Wrap in IMOSDataset
         dataset = IMOSDataset.from_xarray(ds)
 
@@ -68,3 +74,27 @@ def _now_utc_matlab_datenum() -> float:
     ordinal = now.toordinal()
     frac = (now - datetime(now.year, now.month, now.day)).total_seconds() / 86400.0
     return ordinal + 366 + frac
+
+
+def _separate_qc_flags(ds: xr.Dataset) -> None:
+    """Separate *_quality_control variables and rename to *_QC convention.
+    
+    Mirrors MATLAB netcdfParse.m: variables with '_quality_control' suffix
+    are identified, renamed to '{varname}_QC' (the IMOSDataset convention),
+    and kept as data variables (downstream code accesses them via QC_SUFFIX).
+    
+    This operation is done in-place on the xarray Dataset.
+    """
+    qc_suffix_matlab = "_quality_control"
+    vars_to_rename: dict[str, str] = {}
+    
+    for var_name in list(ds.data_vars):
+        if var_name.endswith(qc_suffix_matlab):
+            # Extract the base variable name
+            base_name = var_name[: -len(qc_suffix_matlab)]
+            # Rename to IMOS toolbox convention: {base}_QC
+            new_name = f"{base_name}{QC_SUFFIX}"
+            vars_to_rename[var_name] = new_name
+    
+    if vars_to_rename:
+        ds.rename_vars(vars_to_rename)

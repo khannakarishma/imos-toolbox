@@ -123,7 +123,7 @@ def read_workhorse_ensembles(filename: Path) -> dict[str, Any]:
         raise ValueError(f"No ensembles have correct spacing in {filename}")
     
     # Parse all ensembles
-    ensembles = {
+    ensembles: dict[str, Any] = {
         'fixedLeader': {},
         'variableLeader': {},
         'velocity': {},

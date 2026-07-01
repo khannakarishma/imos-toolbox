@@ -445,9 +445,25 @@ class AquadoppProfilerParser(BaseParser):
             "instrument_firmware": hardware["FWversion"],
             "instrument_sample_interval": float(np.median(np.diff(time * 24 * 3600))),
             "instrument_average_interval": avg_interval,
+            "power_level": _decode_power_level(int(user["TimCtrlReg"])),
             "beam_angle": 25.0,
             "beam_to_xyz_transform": head["TransformationMatrix"].tolist(),
             "parser": self.parser_name,
         })
 
         return dataset
+
+
+_POWER_LEVELS = {0: "HIGH", 1: "HIGH-", 2: "LOW+", 3: "LOW"}
+
+
+def _decode_power_level(tim_ctrl_reg: int) -> str:
+    """Decode the Aquadopp timing-control-register power level.
+
+    Mirrors MATLAB aquadoppProfilerParse.m (lines 68-77): bits 7:6 of
+    ``TimCtrlReg`` form a 2-bit value (bit 7 is the most-significant) that maps
+    to the diagnostic power-level string stored in ``meta.user`` as
+    ``TimCtrlReg_PowerLevel_``.
+    """
+    value = (((tim_ctrl_reg >> 6) & 1) << 1) | ((tim_ctrl_reg >> 5) & 1)
+    return _POWER_LEVELS[value]

@@ -355,7 +355,7 @@ def _convert_conductivity(
     
     G = float(header['G'])
     H = float(header['H'])
-    I = float(header['I'])
+    I = float(header['I'])  # noqa: E741 - SBE conductivity coefficient name
     J = float(header['J'])
     CTCOR = float(header['CTCOR'])
     CPCOR = float(header['CPCOR'])
@@ -978,7 +978,7 @@ def _build_timeseries_dataset(
         if var_name == 'TIME':
             continue  # TIME is already a dimension
         
-        attrs = {'coordinates': coordinates}
+        attrs: dict[str, Any] = {'coordinates': coordinates}
         if var_name in comment_dict and comment_dict[var_name]:
             attrs['comment'] = comment_dict[var_name]
         
@@ -1101,7 +1101,7 @@ def _build_profile_dataset(
             if var_name in ['TIME', 'DEPTH']:
                 continue
             
-            attrs = {'coordinates': 'TIME LATITUDE LONGITUDE DEPTH'}
+            attrs: dict[str, Any] = {'coordinates': 'TIME LATITUDE LONGITUDE DEPTH'}
             if var_name in comment_dict and comment_dict[var_name]:
                 attrs['comment'] = comment_dict[var_name]
             

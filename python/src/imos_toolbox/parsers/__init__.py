@@ -1,8 +1,11 @@
 """Parser framework and parser implementations."""
 
 from imos_toolbox.parsers.base import BaseParser
+from imos_toolbox.parsers.aquadopp_profiler import AquadoppProfilerParser
+from imos_toolbox.parsers.aquadopp_velocity import AquadoppVelocityParser
 from imos_toolbox.parsers.aquatec import AquatecParser
 from imos_toolbox.parsers.awac import AWACParser
+from imos_toolbox.parsers.continental import ContinentalParser
 from imos_toolbox.parsers.dr1050 import DR1050Parser
 from imos_toolbox.parsers.ecobb9 import ECOBB9Parser
 from imos_toolbox.parsers.echoview import EchoviewParser
@@ -33,8 +36,11 @@ from imos_toolbox.parsers.ysi6series import YSI6SeriesParser
 
 __all__ = [
 	"BaseParser",
+	"AquadoppProfilerParser",
+	"AquadoppVelocityParser",
 	"AquatecParser",
 	"AWACParser",
+	"ContinentalParser",
 	"DR1050Parser",
 	"ECOBB9Parser",
 	"EchoviewParser",

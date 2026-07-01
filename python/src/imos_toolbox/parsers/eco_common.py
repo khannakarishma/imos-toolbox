@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
@@ -292,7 +293,7 @@ def convert_eco_raw_var(column: ECOColumn, sample: np.ndarray) -> tuple[str, np.
 
 def _cal_attrs(column: ECOColumn) -> dict:
     """Build calibration attribute dict (mirrors MATLAB calibration struct)."""
-    attrs = {
+    attrs: dict[str, Any] = {
         "calibration_formula": (
             "value_engineering_units = (counts - calibration_dark_count) "
             "x calibration_scale_factor"

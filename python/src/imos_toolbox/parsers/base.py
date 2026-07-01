@@ -15,5 +15,5 @@ class BaseParser(ABC):
     parser_name: str = "base"
 
     @abstractmethod
-    def parse(self, filenames: Iterable[str | Path], mode: str) -> IMOSDataset:
+    def parse(self, filenames: Iterable[str | Path], mode: str) -> IMOSDataset | list[IMOSDataset]:
         """Parse one or more input files into an IMOSDataset."""

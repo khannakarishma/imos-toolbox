@@ -10,7 +10,7 @@ Based on MATLAB implementation by Paul McCarthy, Charles James, Guillaume Galibe
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Iterable
+from typing import Any, Iterable
 
 import numpy as np
 
@@ -387,7 +387,7 @@ class WorkhorseParser(BaseParser):
         direction_vars = {wpdi, wwpd, swpd, vdir, sswv}
         
         def _attrs(name: str, coordinates: str = coords_surface) -> dict:
-            a = {'coordinates': coordinates}
+            a: dict[str, Any] = {'coordinates': coordinates}
             if magdec_name_extension == '' and name in direction_vars:
                 a['compass_correction_applied'] = meta.compass_correction_applied
                 a['comment'] = magdec_comment

@@ -86,7 +86,7 @@ def parse_staroddi_dat(source_file: Path, mode: str, parser_name: str, default_m
     is_fahrenheit = header.get("is_fahrenheit", False)
     if not is_fahrenheit:
         # Fallback: heuristic (median > 60 suggests Fahrenheit)
-        for vn in list(dataset.dataset.data_vars):
+        for vn in [str(v) for v in dataset.dataset.data_vars]:
             if vn == "TEMP" or vn.startswith("TEMP_"):
                 vals = dataset.dataset[vn].values
                 finite = vals[np.isfinite(vals)]
@@ -95,7 +95,7 @@ def parse_staroddi_dat(source_file: Path, mode: str, parser_name: str, default_m
                     break
     
     if is_fahrenheit:
-        for vn in list(dataset.dataset.data_vars):
+        for vn in [str(v) for v in dataset.dataset.data_vars]:
             if vn == "TEMP" or vn.startswith("TEMP_"):
                 dataset.dataset[vn].values[:] = (dataset.dataset[vn].values - 32.0) * 5.0 / 9.0
                 dataset.dataset[vn].attrs["comment"] = "Originaly expressed in Fahrenheit."
@@ -277,8 +277,6 @@ def _parse_data_rows(
     Handles reconverted files with dual columns (raw + converted per channel)
     and resolves duplicate IMOS names (TEMP → TEMP, TEMP_2, etc.).
     """
-    is_date_joined = bool(header.get("is_date_joined", True))
-
     times: list[float] = []
     by_var: dict[str, list[float]] = {}
 

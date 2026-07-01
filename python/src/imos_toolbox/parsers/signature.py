@@ -17,7 +17,7 @@ MATLAB source: Parser/signatureParse.m (880 lines) + Parser/readAD2CPBinary.m (6
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Iterable
 
 import numpy as np
 

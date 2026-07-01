@@ -22,7 +22,6 @@ from typing import Any
 import re
 
 import numpy as np
-import pandas as pd
 
 
 def read_awac_wave_ascii(filename: Path | str) -> dict[str, Any] | None:
@@ -118,12 +117,12 @@ def read_awac_wave_ascii(filename: Path | str) -> dict[str, Any] | None:
         
         # Read summary files (text)
         if summary_file.exists():
-            with open(summary_file, 'r') as f:
-                wave_data['summary'] = f.readlines()
+            with open(summary_file, 'r') as fh:
+                wave_data['summary'] = fh.readlines()
         
         if wave_summary_file.exists():
-            with open(wave_summary_file, 'r') as f:
-                wave_data['waveSummary'] = f.readlines()
+            with open(wave_summary_file, 'r') as fh:
+                wave_data['waveSummary'] = fh.readlines()
         
         # Read data files (whitespace-delimited)
         header = np.loadtxt(header_file)
@@ -293,7 +292,7 @@ def read_awac_wave_ascii(filename: Path | str) -> dict[str, Any] | None:
         if n_time_full_spectrum != n_time:
             print(f"Info: Full directional spectrum in {file_rad_name}.wds")
             print(f"      is missing {n_time - n_time_full_spectrum} time samples.")
-            print(f"      Assumed these were the last time samples.")
+            print("      Assumed these were the last time samples.")
         
         # Reshape full spectrum: (freq*time, dir) -> (time, freq, dir)
         pwr_freq_dir_data = pwr_freq_dir[1:, :]  # Skip first row (direction vector)
