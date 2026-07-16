@@ -151,14 +151,22 @@ class AquatecParser(BaseParser):
             if len(tokens) < 6:
                 continue
 
-            # Time: H, M, S, D, M, Y (mirrors MATLAB textscan order with HH:MM:SS DD/MM/YYYY)
+            # Time parsing: MATLAB format depends on VERSION
+            # V3.0: "HH:MM:SS DD/MM/YYYY" → tokens = [H, M, S, D, M, Y]
+            # V4.0: "DD/MM/YYYY HH:MM:SS" → tokens = [D, M, Y, H, M, S]
+            # Detect by checking if tokens[2] is a 4-digit year
             try:
-                hour = int(tokens[0])
-                minute = int(tokens[1])
-                second = int(tokens[2])
-                day = int(tokens[3])
-                month = int(tokens[4])
-                year = int(tokens[5])
+                t0, t1, t2, t3, t4, t5 = int(tokens[0]), int(tokens[1]), int(tokens[2]), int(tokens[3]), int(tokens[4]), int(tokens[5])
+                
+                if t2 > 1900:
+                    # V4.0 format: D/M/Y H:M:S
+                    day, month, year, hour, minute, second = t0, t1, t2, t3, t4, t5
+                elif t5 > 1900:
+                    # V3.0 format: H:M:S D/M/Y
+                    hour, minute, second, day, month, year = t0, t1, t2, t3, t4, t5
+                else:
+                    # Assume V3.0 with 2-digit year
+                    hour, minute, second, day, month, year = t0, t1, t2, t3, t4, t5
 
                 # Handle 2-digit year
                 if year < 100:

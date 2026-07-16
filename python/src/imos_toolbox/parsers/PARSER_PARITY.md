@@ -137,8 +137,8 @@ Tests (26 passed): instantiation, basic parse per file, IMOS scaffold validation
 | `applied_offset = -14.7*0.689476` | `sbe26.py` → `_build_dataset()` | ✅ |
 
 **Missing**: None  
-**Test**: `test_sbe26_basic.py` · Data: synthetic `.tid` fixture (created by test)  
-Tests (9 passed): instantiation, basic parse, IMOS scaffolds, coordinates, TIME dimension, time centering (+2min), pressure conversion (psia→dbar), applied_offset, global attributes
+**Test**: `test_sbe26.py` · Data: `data/sbe/sbe26/` (3 real .tid files: SBE26Plus1711_2409.tid, SBE26_1711_2409.tid, SBE26_1711_2409_NEW.tid)  
+Tests (11 passed): instantiation, basic parse, IMOS scaffolds, coordinates, TIME dimension, time centering (+2min), pressure conversion (psia→dbar), applied_offset, global attributes, complete structure
 
 ### SBE37 (SBE37Parse.m + readSBE37hex.m + SBE3x.m → sbe37.py + seabird_common.py)
 
@@ -296,8 +296,8 @@ Tests (6 passed): instantiation, basic parse (verifies TIME dim + data vars), di
 | `ECOBB9Parse.m` + `readBB9raw.m` | `ecobb9.py` + `eco_common.py` → `parse_ecobb9_raw()` | ✅ |
 
 **Missing**: None  
-**Test**: `test_wetstar.py` / `test_ecobb9.py` · No real data; synthetic tests  
-Tests (5 passed each): instantiation, format validation, synthetic parse (creates tmp files, verifies TIME dim + scaffolds), calibration math (verifies scale×(counts−offset) formula and calibration attributes: dark_count, scale_factor)
+**Test**: `test_wetstar.py` / `test_ecobb9.py` · Data: real .raw + .dev files (`data/wetstar/DAPCS20151107_0018.raw`, `data/ecobb9/DAPCS20151107_0018.raw`)  
+Tests (7 passed each): instantiation, format validation, basic parse on real data, dimensions (TIME), scaffold variables, metadata (make='WET Labs'), calibration math (scale×(counts−offset)), calibration attributes (dark_count, scale_factor)
 
 ### Starmon Mini/DST (StarmonMiniParse.m/StarmonDSTParse.m → GenericParser/StaroddiParser.m → staroddi_common.py)
 
@@ -359,8 +359,8 @@ Tests (7 passed, 1 skipped): instantiation, basic parse, dimensions (TIME), scaf
 | Date/time parsing (multiple formats) | `vemco.py` → datetime strptime | ✅ |
 
 **Missing**: None  
-**Test**: `test_vemco.py` · No real data files; synthetic tests  
-Tests (4 passed, 5 skipped): instantiation, format validation (rejects non-.csv), synthetic parse (verifies parser_name='Vemco'), file inventory; skipped = data-dependent tests need real Vemco CSV files
+**Test**: `test_vemco.py` · Data: `data/VEMCO/` (4 real .csv files + .vld files)  
+Tests (7 passed): instantiation, format validation (rejects non-.csv), basic parse on real Minilog-II-T CSV files, dimensions (TIME), scaffold variables, metadata (make='Vemco'), file inventory
 
 ### NIWA (NIWAParse.m → niwa.py)
 
@@ -386,8 +386,10 @@ Tests (3 passed, 5 skipped): instantiation, synthetic parse (verifies parser_nam
 | Time generation from start/stop/interval | `aquatec.py` → time vector | ✅ |
 
 **Missing**: None  
-**Test**: `test_aquatec.py` · No real data files; synthetic tests  
-Tests (4 passed, 5 skipped): instantiation, format validation, synthetic parse (verifies parser_name='aquatec'), file inventory; skipped = data-dependent tests need real Aquatec files
+**Test**: `test_aquatec.py` · Data: `data/Aquatec/` (2 real .csv files)  
+Tests (9 passed): instantiation, format validation, basic parse on real AQUAlogger 520PT data, dimensions (TIME), scaffold variables, coordinates, metadata (make='Aquatec', model, serial, firmware, sample_interval), file inventory
+
+> **Note**: Python adds V4.0 timestamp support (`DD/MM/YYYY HH:MM:SS`) which MATLAB does not handle. MATLAB only supports V3.0 (`HH:MM:SS DD/MM/YYYY`). All other logic is identical.
 
 ### Sensus Ultra (sensusUltraParse.m → sensus_ultra.py)
 
@@ -400,8 +402,8 @@ Tests (4 passed, 5 skipped): instantiation, format validation, synthetic parse (
 | Serial number from column 2 | `sensus_ultra.py` | ✅ |
 
 **Missing**: None  
-**Test**: `test_sensus_ultra.py` · No real data files; synthetic tests  
-Tests (4 passed, 5 skipped): instantiation, format validation, synthetic parse (verifies parser_name='sensusUltra'), file inventory; skipped = data-dependent tests need real ReefNet CSV files
+**Test**: `test_sensus_ultra.py` · Data: `data/SENSUS/` (2 real .csv files)  
+Tests (7 passed): instantiation, format validation, basic parse on real ReefNet CSV files, dimensions (TIME), scaffold variables, metadata (make='ReefNet'), file inventory
 
 ### RCM (RCMParse.m → rcm.py)
 
@@ -528,7 +530,7 @@ Tests (11 passed): instantiation, format validation, schema/coords/metadata, CPH
 | # | Parser | MATLAB Source | Test File | Test Data Path | Data Files |
 |---|---|---|---|---|---|
 | 1 | SBE19 | `SBE19Parse.m` | `test_sbe19.py` | `data/sbe/sbe19/` | 5 files |
-| 2 | SBE26 | `SBE26Parse.m` | `test_sbe26_basic.py` | synthetic `.tid` fixture | synthetic |
+| 2 | SBE26 | `SBE26Parse.m` | `test_sbe26.py` | `data/sbe/sbe26/` | 3 .tid files |
 | 3 | SBE37 | `SBE37Parse.m` | `test_sbe37.py` | `data/sbe/sbe37/` | 39 files |
 | 4 | SBE39 | `SBE39Parse.m` | `test_sbe39.py` | `data/sbe/sbe39/` | 2 .asc |
 | 5 | SBE56 | `SBE56Parse.m` | `test_sbe56.py` | `data/sbe/sbe56/` | 12 files |
@@ -540,17 +542,17 @@ Tests (11 passed): instantiation, format validation, schema/coords/metadata, CPH
 | 11 | Signature/AD2CP | `signatureParse.m` | `test_signature.py` | `data/Nortek/signature_*/` | 10 .ad2cp |
 | 12 | OceanContour | `oceanContourParse.m` | `test_ocean_contour.py` | `data/netcdf/Nortek/OceanContour/` | 3 .nc |
 | 13 | WQM | `WQMParse.m` | `test_wqm.py` | `data/WQM/` | 361 RAW + 37 DAT |
-| 14 | WetStar | `WetStarParse.m` | `test_wetstar.py` | `data/wetstar/` | (synthetic) |
-| 15 | ECOBB9 | `ECOBB9Parse.m` | `test_ecobb9.py` | `data/ecobb9/` | (synthetic) |
+| 14 | WetStar | `WetStarParse.m` | `test_wetstar.py` | `data/wetstar/` | 1 .raw + .dev |
+| 15 | ECOBB9 | `ECOBB9Parse.m` | `test_ecobb9.py` | `data/ecobb9/` | 1 .raw + .dev |
 | 16 | ECO Triplet | `ECOTripletParse.m` | `test_ecotriplet.py` | `data/ECOTriplet/v000/` | 4 files |
 | 17 | XR (RBR) | `XRParse.m` | `test_xr.py` | `data/RBR/XR420/v000/` | 3 files |
 | 18 | DR1050 | `DR1050Parse.m` | `test_dr1050.py` | `data/RBR/DR-1050/` | 2 files |
-| 19 | Vemco | `VemcoParse.m` | `test_vemco.py` | `data/vemco/` | (synthetic) |
+| 19 | Vemco | `VemcoParse.m` | `test_vemco.py` | `data/VEMCO/` | 4 .csv + .vld |
 | 20 | NIWA | `NIWAParse.m` | `test_niwa.py` | `data/niwa/` | (synthetic) |
 | 21 | Starmon Mini | `StarmonMiniParse.m` | `test_starmon_mini.py` | `data/Star_oddi/mini/` | 86 files |
 | 22 | Starmon DST | `StarmonDSTParse.m` | `test_starmon_dst.py` | `data/Star_oddi/dst_ctd/` | 4 files |
-| 23 | Aquatec | `aquatecParse.m` | `test_aquatec.py` | `data/aquatec/` | (synthetic) |
-| 24 | Sensus Ultra | `sensusUltraParse.m` | `test_sensus_ultra.py` | `data/sensus_ultra/` | (synthetic) |
+| 23 | Aquatec | `aquatecParse.m` | `test_aquatec.py` | `data/Aquatec/` | 2 .csv (newer format) |
+| 24 | Sensus Ultra | `sensusUltraParse.m` | `test_sensus_ultra.py` | `data/SENSUS/` | 2 .csv |
 | 25 | RCM | `RCMParse.m` | `test_rcm.py` | `data/rcm/` | (synthetic) |
 | 26 | YSI 6-Series | `YSI6SeriesParse.m` | `test_ysi6series.py` | `data/ysi6series/` | (synthetic) |
 | 27 | NetCDF re-import | `netcdfParse.m` | `test_netcdf_reimport.py` | `data/netcdf/test/` | 2 .nc |
@@ -565,7 +567,7 @@ Tests (11 passed): instantiation, format validation, schema/coords/metadata, CPH
 | # | Parser | Formats | Instantiation | Smoke Test | Schema Test | Data Validation | Metadata | Feature Detection | Discovery |
 |---|---|---|---|---|---|---|---|---|---|
 | 1 | SBE19 | .cnv, .hex | ✅ name='SBE19' | ✅ 5 files | ✅ TIME dim, scaffolds, coords | ✅ Temp/Pres ranges | ✅ make='Seabird' | ✅ PAR sensor | 5 files |
-| 2 | SBE26 | .tid | ✅ name='SBE26' | ✅ synthetic | ✅ TIME dim, scaffolds | ✅ Pressure conversion | ✅ make='Seabird', offset | N/A | synthetic |
+| 2 | SBE26 | .tid | ✅ name='SBE26' | ✅ 3 .tid files | ✅ TIME dim, scaffolds | ✅ Pressure conversion | ✅ make='Seabird', offset | N/A | 3 files |
 | 3 | SBE37 | .asc,.cnv,.DAT | ✅ name='SBE37' | ✅ .cnv files | ✅ TIME dim, scaffolds | ✅ Temp range | ✅ make='Seabird' | ✅ CNDC | 39 files |
 | 4 | SBE39 | .asc | ✅ name='SBE39' | ✅ 2 .asc | ✅ TIME dim, scaffolds | ✅ Temp range | ✅ make='Sea-bird Electronics' | ✅ Optional PRES | 2 files |
 | 5 | Workhorse | .000,.PD0 | ✅ name='Workhorse' | ✅ beam+enu | ✅ TIME+DIST, scaffolds | ✅ Temp/Pres | ✅ make='Teledyne RDI' | ✅ beam/earth, wave | 12 files |
@@ -576,16 +578,16 @@ Tests (11 passed): instantiation, format validation, schema/coords/metadata, CPH
 | 10 | Signature | .ad2cp | ✅ name='Signature' | ✅ real .ad2cp | ✅ TIME+HEIGHT, scaffolds | ✅ Verified | ✅ make='Nortek' | ✅ V3 records | 10 files |
 | 11 | OceanContour | .nc | ✅ name='OceanContour' | ✅ real .nc | ✅ TIME+HEIGHT, scaffolds | ✅ Verified | ✅ make='Nortek' | ✅ Group detection | 3 files |
 | 12 | WQM | .RAW,.DAT | ✅ name='WQM' | ✅ DAT+RAW | ✅ TIME, scaffolds | ✅ Burst detect | ✅ make='WET Labs' | ✅ O2/CHL/NTU/PAR | 398 files |
-| 13 | WetStar | .raw+.dev | ✅ name='WetStar' | ✅ Synthetic | ✅ TIME, scaffolds, cal | ✅ scale*(c-o) | ✅ make='WET Labs' | ✅ .dev channels | (synthetic) |
-| 14 | ECOBB9 | .raw+.dev | ✅ name='ECOBB9' | ✅ Synthetic | ✅ Cal attrs | ✅ VSF math | ✅ make='WET Labs' | ✅ wavelength | (synthetic) |
+| 13 | WetStar | .raw+.dev | ✅ name='WetStar' | ✅ Real data | ✅ TIME, scaffolds, cal | ✅ scale*(c-o) | ✅ make='WET Labs' | ✅ .dev channels | 1 .raw+.dev |
+| 14 | ECOBB9 | .raw+.dev | ✅ name='ECOBB9' | ✅ Real data | ✅ Cal attrs | ✅ VSF math | ✅ make='WET Labs' | ✅ wavelength | 1 .raw+.dev |
 | 15 | ECO Triplet | .raw+.dev | ✅ name='ECOTriplet' | ✅ 4 files | ✅ TIME, scaffolds, cal | ✅ Reasonable | ✅ make='WET Labs' | ✅ burst, channels | 4 files |
 | 16 | XR (RBR) | .txt,.dat | ✅ name='XR' | ✅ 3 files | ✅ TIME, scaffolds, coords | ✅ Ranges OK | ✅ make='RBR' | ✅ Classic/Ruskin/profile | 3 files |
 | 17 | DR1050 | .dat,.txt | ✅ name='DR1050' | ✅ 2 files | ✅ TIME, scaffolds, coords | ✅ Pressure OK | ✅ make='RBR' | N/A | 2 files |
-| 18 | Vemco | .csv | ✅ name='Vemco' | ✅ Synthetic | ✅ verified | — | ✅ make='Vemco' | — | (synthetic) |
+| 18 | Vemco | .csv | ✅ name='Vemco' | ✅ Real data | ✅ verified | ✅ TEMP range | ✅ make='Vemco' | ✅ Minilog-II-T | 4 .csv |
 | 19 | NIWA | .csv | ✅ name='NIWA' | ✅ Synthetic | — | — | — | — | (synthetic) |
 | 20 | Starmon Mini | .DAT | ✅ name='StarmonMini' | ✅ 86 files | ✅ TIME, scaffolds | ✅ Temp range | ✅ make='Star ODDI' | ✅ reconversion, °F | 86 files |
 | 21 | Starmon DST | .DAT | ✅ name='StarmonDST' | ✅ 4 files | ✅ TIME, scaffolds | ✅ Ranges OK | ✅ make='Star ODDI' | ✅ Tilt, offset | 4 files |
-| 22 | Aquatec | .csv | ✅ name='aquatec' | ✅ Synthetic | — | — | — | — | (synthetic) |
+| 22 | Aquatec | .csv | ✅ name='aquatec' | ✅ Real data | ✅ TIME, scaffolds, coords | ✅ Temp/Pres OK | ✅ make='Aquatec' | ✅ burst/continuous, V4.0 | 2 .csv |
 | 23 | Sensus Ultra | .csv | ✅ name='sensusUltra' | ✅ Synthetic | — | — | — | — | (synthetic) |
 | 24 | RCM | .dat | ✅ name='RCM' | ✅ Synthetic | — | — | — | — | (synthetic) |
 | 25 | YSI 6-Series | .csv,.dat | ✅ name='YSI6Series' | ✅ Synthetic | — | — | — | — | (synthetic) |

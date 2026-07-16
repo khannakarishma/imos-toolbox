@@ -15,7 +15,7 @@ from pathlib import Path
 from imos_toolbox.parsers.aquatec import AquatecParser
 
 TEST_DATA_DIR = Path(__file__).parent / "data" / "aquatec"
-DATA_EXTENSIONS = [".txt", ".dat", ".csv"]
+DATA_EXTENSIONS = [".csv"]
 SCAFFOLD_VARS = ["TIMESERIES", "LATITUDE", "LONGITUDE", "NOMINAL_DEPTH"]
 
 
