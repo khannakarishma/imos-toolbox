@@ -36,15 +36,15 @@ class SensusUltraParser(BaseParser):
         time_values = np.asarray(times, dtype=float)
 
         dataset = IMOSDataset.empty()
-        obs_dim = "obs"
-        dataset.add_dimension(obs_dim, np.arange(len(time_values)))
-        dataset.add_variable(name="TIME", data=time_values, dims=[obs_dim])
+        dataset.add_dimension("TIME", time_values)
         dataset.add_variable(name="TIMESERIES", data=np.asarray(1, dtype=np.int32), dims=[])
         dataset.add_variable(name="LATITUDE", data=np.asarray(np.nan, dtype=float), dims=[])
         dataset.add_variable(name="LONGITUDE", data=np.asarray(np.nan, dtype=float), dims=[])
         dataset.add_variable(name="NOMINAL_DEPTH", data=np.asarray(np.nan, dtype=float), dims=[])
-        dataset.add_variable(name="TEMP", data=temp_c, dims=[obs_dim])
-        dataset.add_variable(name="PRES", data=pres_dbar, dims=[obs_dim])
+
+        coords = "TIME LATITUDE LONGITUDE NOMINAL_DEPTH"
+        dataset.add_variable(name="TEMP", data=temp_c, dims=["TIME"], attrs={"coordinates": coords})
+        dataset.add_variable(name="PRES", data=pres_dbar, dims=["TIME"], attrs={"coordinates": coords})
 
         attrs: dict[str, str | float] = {
             "toolbox_input_file": str(source_file),
@@ -80,13 +80,14 @@ def _read_sensus_csv(source_file: Path) -> tuple[list[str], list[float], list[fl
                 day = int(float(row[5]))
                 hour = int(float(row[6]))
                 minute = int(float(row[7]))
-                second = float(row[8]) + float(row[9])
-                sec_int = int(second)
-                micro = int(round((second - sec_int) * 1_000_000))
-                dt = datetime(year, month, day, hour, minute, sec_int, micro)
+                # MATLAB: datenum(Y,M,D,H,Min, S + offset_seconds)
+                # datenum handles seconds > 59 by rolling over. We use timedelta.
+                base_seconds = float(row[8]) + float(row[9])
+                from datetime import timedelta
+                dt = datetime(year, month, day, hour, minute) + timedelta(seconds=base_seconds)
                 pressure = float(row[10])
                 temperature = float(row[11])
-            except ValueError:
+            except (ValueError, OverflowError):
                 continue
 
             serials.append(row[1].strip())

@@ -118,6 +118,11 @@ flowchart TD
 | O2/conductivity/temperature calibration (hex) | `seabird_common.py` → `_convert_*()` functions | ✅ |
 | Profile mode (ascending/descending split) | `seabird_common.py` → `_build_profile_dataset()` | ✅ |
 
+**Known Intentional Deviation — `sampleExpr` field**:
+- MATLAB `SBE19Parse.m` line 469: `header.mesaurementsPerSample = str2double(tkns{1}{2})` stores the UNITS word (e.g. "seconds") from the 2nd capture group as `mesaurementsPerSample`, which is a bug in the original MATLAB code (it should use `tkns{1}{3}` for the integer count).
+- Python correctly stores `header['measurementsPerSample'] = int(match.group(3))` using the 3rd capture group.
+- **Decision**: Python intentionally deviates here because the MATLAB code has a latent bug. The `sampleInterval` field (group 1) is correct in both. The `measurementsPerSample` field is never used downstream in any MATLAB processing path, so this bug has no output impact.
+
 **Missing**: None  
 **Test**: `test_sbe19.py` · Data: `data/sbe/sbe19/` (5 files)  
 Tests (26 passed): instantiation, basic parse per file, IMOS scaffold validation, coordinates attributes, TIME dimension check, temperature range validation, pressure range validation, PAR sensor detection (3 files), file inventory

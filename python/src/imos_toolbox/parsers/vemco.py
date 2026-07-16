@@ -40,18 +40,18 @@ class VemcoParser(BaseParser):
             raise ValueError(f"No valid Vemco samples found in {source_file}")
 
         dataset = IMOSDataset.empty()
-        obs_dim = "obs"
-        dataset.add_dimension(obs_dim, np.arange(len(times)))
-        dataset.add_variable(name="TIME", data=np.asarray(times, dtype=float), dims=[obs_dim])
+        dataset.add_dimension("TIME", np.asarray(times, dtype=float))
         dataset.add_variable(name="TIMESERIES", data=np.asarray(1, dtype=np.int32), dims=[])
         dataset.add_variable(name="LATITUDE", data=np.asarray(np.nan, dtype=float), dims=[])
         dataset.add_variable(name="LONGITUDE", data=np.asarray(np.nan, dtype=float), dims=[])
         dataset.add_variable(name="NOMINAL_DEPTH", data=np.asarray(np.nan, dtype=float), dims=[])
 
+        coords = "TIME LATITUDE LONGITUDE NOMINAL_DEPTH"
         for var_name, values in values_by_var.items():
             if len(values) < len(times):
                 values = np.concatenate([values, np.full(len(times) - len(values), np.nan)])
-            dataset.add_variable(name=var_name, data=np.asarray(values[: len(times)], dtype=float), dims=[obs_dim])
+            dataset.add_variable(name=var_name, data=np.asarray(values[: len(times)], dtype=float),
+                                 dims=["TIME"], attrs={"coordinates": coords})
 
         attrs: dict[str, str | float] = {
             "toolbox_input_file": str(source_file),

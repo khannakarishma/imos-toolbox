@@ -180,8 +180,8 @@ def parse_ecobb9_raw(source_file: Path, device: ECODeviceInfo, mode: str, parser
             try:
                 numeric.append(float(parts[idx]))
             except ValueError:
-                valid = False
-                break
+                # MATLAB str2double returns NaN for non-numeric strings (e.g. hex checksums)
+                numeric.append(float('nan'))
         if not valid:
             continue
         for idx, value in enumerate(numeric, start=1):
@@ -213,16 +213,34 @@ def parse_ecobb9_raw(source_file: Path, device: ECODeviceInfo, mode: str, parser
 
 
 def parse_wetstar_raw(source_file: Path, device: ECODeviceInfo, mode: str, parser_name: str) -> IMOSDataset:
-    lines = [line.strip() for line in source_file.read_text(encoding="utf-8", errors="ignore").splitlines() if line.strip()]
-    if not lines:
-        raise ValueError(f"No data rows found in {source_file}")
-
-    samples = []
-    for line in lines:
-        try:
-            samples.append(float(line))
-        except ValueError:
+    """Parse WetStar raw data file.
+    
+    Mirrors MATLAB readWetStarraw.m:
+    - Reads tab-delimited, takes all tokens, converts to float (non-numeric → NaN)
+    - Single column of fluorescence counts
+    """
+    content = source_file.read_text(encoding="utf-8", errors="ignore")
+    
+    # MATLAB: textscan(fid, '%s', 'Delimiter', '\t') — split by tab, get all tokens
+    # Then str2double converts non-numeric to NaN
+    all_values: list[float] = []
+    for line in content.splitlines():
+        line = line.strip()
+        if not line:
             continue
+        # Split by tab
+        parts = line.split('\t')
+        for part in parts:
+            part = part.strip()
+            if not part:
+                continue
+            try:
+                all_values.append(float(part))
+            except ValueError:
+                all_values.append(float('nan'))
+    
+    # Remove NaN values (MATLAB's convertECOrawVar ignores them via calibration math)
+    samples = [v for v in all_values if not np.isnan(v)]
 
     if not samples:
         raise ValueError(f"No valid WetStar samples found in {source_file}")

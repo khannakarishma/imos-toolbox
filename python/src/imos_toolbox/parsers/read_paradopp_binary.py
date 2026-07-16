@@ -228,16 +228,25 @@ def _validate_sync_markers(
         is_pair_inconsistent = np.append(np.diff(is_pair_inconsistent.astype(int)) != 0, False) & is_pair_inconsistent
     
     # Handle remaining inconsistencies
+    # Mirrors MATLAB:
+    #   if any(~isSizeConsistent)
+    #       iSync(iSync) = [true; isSizeConsistent(1:end-1)];
+    #       if ~isSizeConsistent(end)
+    #           iSync(iSync) = [true(sum(iSync)-1, 1); false];
+    #       end
+    #   end
     if np.any(~is_size_consistent):
-        # Keep first of each inconsistent pair
+        # Keep first sync, then keep where previous was consistent
         keep = np.ones(np.sum(is_sync), dtype=bool)
         keep[1:] = is_size_consistent[:-1]
         is_sync[is_sync] = keep
         
         # Handle truncated last section
         if not is_size_consistent[-1]:
-            keep[-1] = False
-            is_sync[is_sync] = keep
+            n_remaining = np.sum(is_sync)
+            keep2 = np.ones(n_remaining, dtype=bool)
+            keep2[-1] = False
+            is_sync[is_sync] = keep2
     
     return is_sync
 
@@ -1189,16 +1198,255 @@ def _read_hr_aquadopp_profile(data: np.ndarray, endianness: str) -> list[dict]:
     return sections
 
 def _read_awac_wave_data(data: np.ndarray, endianness: str) -> list[dict]:
-    return []
+    """Read AWAC Wave Data section (ID 0x30).
+    
+    Mirrors MATLAB readAwacWaveData (System Integrator Manual pg 49).
+    """
+    n_records = data.shape[0]
+    sections = []
+    
+    for i in range(n_records):
+        record = data[i, :]
+        
+        # Parse uint16 block (bytes 5-10): Pressure, Distance, Analn
+        pressure = _read_uint16(record[4:6].reshape(1, 2), endianness)[0]
+        distance = _read_uint16(record[6:8].reshape(1, 2), endianness)[0]
+        analn = _read_uint16(record[8:10].reshape(1, 2), endianness)[0]
+        
+        # Parse int16 block (bytes 11-18): Vel1-4
+        vel1 = _read_int16(record[10:12].reshape(1, 2), endianness)[0]
+        vel2 = _read_int16(record[12:14].reshape(1, 2), endianness)[0]
+        vel3 = _read_int16(record[14:16].reshape(1, 2), endianness)[0]
+        vel4 = _read_int16(record[16:18].reshape(1, 2), endianness)[0]
+        
+        # Parse uint8 block (bytes 19-22): Amp1-3, Amp4ASTQual
+        amp1 = int(record[18])
+        amp2 = int(record[19])
+        amp3 = int(record[20])
+        amp4_ast_qual = int(record[21])
+        
+        # Checksum (bytes 23-24)
+        checksum = _read_uint16(record[22:24].reshape(1, 2), endianness)[0]
+        
+        sections.append({
+            'Sync': int(record[0]),
+            'Id': int(record[1]),
+            'Size': _read_uint16(record[2:4].reshape(1, 2), endianness)[0],
+            'Pressure': pressure,
+            'Distance': distance,
+            'Analn': analn,
+            'Vel1': vel1,
+            'Vel2': vel2,
+            'Vel3': vel3,
+            'Vel4': vel4,
+            'Amp1': amp1,
+            'Amp2': amp2,
+            'Amp3': amp3,
+            'Amp4ASTQual': amp4_ast_qual,
+            'Checksum': checksum,
+        })
+    
+    return sections
 
 def _read_awac_wave_header(data: np.ndarray, endianness: str) -> list[dict]:
-    return []
+    """Read AWAC Wave Data Header section (ID 0x31).
+    
+    Mirrors MATLAB readAwacWaveHeader (System Integrator Manual pg 49).
+    """
+    n_records = data.shape[0]
+    sections = []
+    
+    for i in range(n_records):
+        record = data[i, :]
+        
+        time = _read_clock_data(record[4:10])
+        
+        # uint16 block (bytes 11-18): NRecords, Blanking, Battery, SoundSpeed
+        n_wave_records = _read_uint16(record[10:12].reshape(1, 2), endianness)[0]
+        blanking = _read_uint16(record[12:14].reshape(1, 2), endianness)[0]
+        battery = _read_uint16(record[14:16].reshape(1, 2), endianness)[0]
+        sound_speed = _read_uint16(record[16:18].reshape(1, 2), endianness)[0]
+        
+        # int16 block (bytes 19-24): Heading, Pitch, Roll
+        heading = _read_int16(record[18:20].reshape(1, 2), endianness)[0]
+        pitch = _read_int16(record[20:22].reshape(1, 2), endianness)[0]
+        roll = _read_int16(record[22:24].reshape(1, 2), endianness)[0]
+        
+        # uint16 block (bytes 25-28): MinPress, HMaxPress
+        min_press = _read_uint16(record[24:26].reshape(1, 2), endianness)[0]
+        h_max_press = _read_uint16(record[26:28].reshape(1, 2), endianness)[0]
+        
+        # int16 (bytes 29-30): Temperature
+        temperature = _read_int16(record[28:30].reshape(1, 2), endianness)[0]
+        
+        # uint16 (bytes 31-32): CellSize
+        cell_size = _read_uint16(record[30:32].reshape(1, 2), endianness)[0]
+        
+        # uint8 (bytes 33-36): Noise1-4
+        noise1 = int(record[32])
+        noise2 = int(record[33])
+        noise3 = int(record[34])
+        noise4 = int(record[35])
+        
+        # uint16 (bytes 37-44): ProcMagn1-4
+        proc_magn1 = _read_uint16(record[36:38].reshape(1, 2), endianness)[0]
+        proc_magn2 = _read_uint16(record[38:40].reshape(1, 2), endianness)[0]
+        proc_magn3 = _read_uint16(record[40:42].reshape(1, 2), endianness)[0]
+        proc_magn4 = _read_uint16(record[42:44].reshape(1, 2), endianness)[0]
+        
+        # Checksum (bytes 59-60, bytes 44-58 are spare)
+        checksum = _read_uint16(record[58:60].reshape(1, 2), endianness)[0]
+        
+        sections.append({
+            'Sync': int(record[0]),
+            'Id': int(record[1]),
+            'Size': _read_uint16(record[2:4].reshape(1, 2), endianness)[0],
+            'Time': time,
+            'NRecords': n_wave_records,
+            'Blanking': blanking,
+            'Battery': battery,
+            'SoundSpeed': sound_speed,
+            'Heading': heading,
+            'Pitch': pitch,
+            'Roll': roll,
+            'MinPress': min_press,
+            'HMaxPress': h_max_press,
+            'Temperature': temperature,
+            'CellSize': cell_size,
+            'Noise1': noise1,
+            'Noise2': noise2,
+            'Noise3': noise3,
+            'Noise4': noise4,
+            'ProcMagn1': proc_magn1,
+            'ProcMagn2': proc_magn2,
+            'ProcMagn3': proc_magn3,
+            'ProcMagn4': proc_magn4,
+            'Checksum': checksum,
+        })
+    
+    return sections
 
 def _read_awac_wave_data_suv(data: np.ndarray, endianness: str) -> list[dict]:
-    return []
+    """Read AWAC Wave Data SUV section (ID 0x36).
+    
+    Mirrors MATLAB readAwacWaveDataSUV (System Integrator Manual pg 49-50).
+    """
+    n_records = data.shape[0]
+    sections = []
+    
+    for i in range(n_records):
+        record = data[i, :]
+        
+        # uint16 block (bytes 3-8): Heading, Pressure, Distance
+        heading = _read_uint16(record[2:4].reshape(1, 2), endianness)[0]
+        pressure = _read_uint16(record[4:6].reshape(1, 2), endianness)[0]
+        distance = _read_uint16(record[6:8].reshape(1, 2), endianness)[0]
+        
+        # uint8 (bytes 9-10): Pitch, Roll
+        pitch = int(record[8])
+        roll = int(record[9])
+        
+        # int16 block (bytes 11-18): Vel1-4
+        vel1 = _read_int16(record[10:12].reshape(1, 2), endianness)[0]
+        vel2 = _read_int16(record[12:14].reshape(1, 2), endianness)[0]
+        vel3 = _read_int16(record[14:16].reshape(1, 2), endianness)[0]
+        vel4_distance2 = _read_int16(record[16:18].reshape(1, 2), endianness)[0]
+        
+        # uint8 block (bytes 19-22): Amp1-3, Amp4ASTQual
+        amp1 = int(record[18])
+        amp2 = int(record[19])
+        amp3 = int(record[20])
+        amp4_ast_qual = int(record[21])
+        
+        # Checksum (bytes 23-24)
+        checksum = _read_uint16(record[22:24].reshape(1, 2), endianness)[0]
+        
+        sections.append({
+            'Sync': int(record[0]),
+            'Id': int(record[1]),
+            'Heading': heading,
+            'Pressure': pressure,
+            'Distance': distance,
+            'Pitch': pitch,
+            'Roll': roll,
+            'Vel1': vel1,
+            'Vel2': vel2,
+            'Vel3': vel3,
+            'Vel4Distance2': vel4_distance2,
+            'Amp1': amp1,
+            'Amp2': amp2,
+            'Amp3': amp3,
+            'Amp4ASTQual': amp4_ast_qual,
+            'Checksum': checksum,
+        })
+    
+    return sections
 
 def _read_awac_stage_data(data: np.ndarray, endianness: str) -> list[dict]:
-    return []
+    """Read AWAC Stage Data section (ID 0x42).
+    
+    Mirrors MATLAB readAwacStageData (System Integrator Manual pg 48).
+    Variable size section — AST window cells.
+    """
+    n_records = data.shape[0]
+    sections = []
+    
+    # Calculate nCells from size field of first record
+    size_val = int(_read_uint16(data[0, 2:4].reshape(1, 2), endianness)[0])
+    n_cells = int(np.floor((size_val * 2) - (32 + 2)))
+    
+    for i in range(n_records):
+        record = data[i, :]
+        
+        size = _read_uint16(record[2:4].reshape(1, 2), endianness)[0]
+        
+        # uint8 (bytes 7-9): Amp1, Amp2, Amp3
+        amp1 = int(record[6])
+        amp2 = int(record[7])
+        amp3 = int(record[8])
+        
+        # uint16 block (bytes 11-20): Pressure, AST1, ASTquality, SoundSpeed, AST2
+        pressure = _read_uint16(record[10:12].reshape(1, 2), endianness)[0]
+        ast1 = _read_uint16(record[12:14].reshape(1, 2), endianness)[0]
+        ast_quality = _read_uint16(record[14:16].reshape(1, 2), endianness)[0]
+        sound_speed = _read_uint16(record[16:18].reshape(1, 2), endianness)[0]
+        ast2 = _read_uint16(record[18:20].reshape(1, 2), endianness)[0]
+        
+        # int16 block (bytes 23-28): Vel1, Vel2, Vel3
+        vel1 = _read_int16(record[22:24].reshape(1, 2), endianness)[0]
+        vel2 = _read_int16(record[24:26].reshape(1, 2), endianness)[0]
+        vel3 = _read_int16(record[26:28].reshape(1, 2), endianness)[0]
+        
+        # Amplitude profile (variable length, starts at byte 33)
+        amp_off = 32
+        cs_off = amp_off + n_cells
+        if n_cells % 2:
+            cs_off += 1
+        
+        amp = record[amp_off:amp_off + n_cells].copy()
+        
+        checksum = _read_uint16(record[cs_off:cs_off + 2].reshape(1, 2), endianness)[0]
+        
+        sections.append({
+            'Sync': int(record[0]),
+            'Id': int(record[1]),
+            'Size': size,
+            'Amp1': amp1,
+            'Amp2': amp2,
+            'Amp3': amp3,
+            'Pressure': pressure,
+            'AST1': ast1,
+            'ASTquality': ast_quality,
+            'SoundSpeed': sound_speed,
+            'AST2': ast2,
+            'Vel1': vel1,
+            'Vel2': vel2,
+            'Vel3': vel3,
+            'Amp': amp,
+            'Checksum': checksum,
+        })
+    
+    return sections
 
 def _read_vectrino_velocity_header(data: np.ndarray, endianness: str) -> list[dict]:
     return []

@@ -62,7 +62,7 @@ def parse_hex_to_dataset(
     # Generate TIME if not present and needed
     if 'TIME' not in data_dict:
         n_samples = len(next(iter(data_dict.values()))) if data_dict else 0
-        time_array = generate_timestamps(inst_header, n_samples)
+        time_array = generate_timestamps(inst_header, n_samples, data_dict=data_dict)
         data_dict['TIME'] = time_array
         comment_dict['TIME'] = 'Generated from header information'
     
@@ -591,28 +591,31 @@ def parse_instrument_header(header_lines: list[str], mode: str) -> dict[str, Any
             header['instrument_serial_no'] = match.group(2)
             
         elif match := re.search(patterns['other'], line):
-            # Generic name=value pairs
-            key = match.group(1).replace('-', '_').replace(' ', '_')
+            # Generic name=value pairs — use _genvarname to mirror MATLAB genvarname()
+            key = _genvarname(match.group(1))
             header[key] = match.group(2)
     
     return header
 
 
-def generate_timestamps(inst_header: dict[str, Any], n_samples: int) -> np.ndarray:
+def generate_timestamps(inst_header: dict[str, Any], n_samples: int, data_dict: dict[str, Any] | None = None) -> np.ndarray:
     """Generate timestamps for data when TIME is not present.
     
-    Mirrors MATLAB genTimestamps() function.
+    Mirrors MATLAB genTimestamps() function exactly.
     
     Args:
         inst_header: Parsed instrument header
         n_samples: Actual number of data samples
+        data_dict: Optional data dictionary (to check for ScanCount)
         
     Returns:
         TIME array as MATLAB datenum
     """
-    # Defaults
+    # Defaults — mirrors MATLAB genTimestamps exactly:
+    #   start    = 0;
+    #   interval = 0.25;
     start = 0.0
-    interval = 0.25 / 86400  # 0.25 seconds in days
+    interval = 0.25
     
     # Try to find start date
     if 'castDate' in inst_header:
@@ -652,10 +655,20 @@ def generate_timestamps(inst_header: dict[str, Any], n_samples: int) -> np.ndarr
         return time
     
     # Use scanAvg if present to determine interval
+    # Mirrors MATLAB: if isfield(instHeader, 'scanAvg')
+    #   interval = (0.25 * instHeader.scanAvg) / 86400;
     if 'scanAvg' in inst_header:
         interval = (0.25 * inst_header['scanAvg']) / 86400
     
+    # If ScanCount column is present, use it for timestamps
+    # Mirrors MATLAB: if isfield(data, 'ScanCount')
+    #   time = ((data.ScanCount - 1) ./ 345600) + cStart;
+    if data_dict is not None and 'ScanCount' in data_dict:
+        time = ((data_dict['ScanCount'] - 1) / 345600) + start
+        return time
+    
     # Calculate from start, interval, and n_samples
+    # Mirrors MATLAB: time = (start:interval:start + (nSamples - 1) * interval)';
     time = np.arange(n_samples) * interval + start
     return time
 
@@ -746,21 +759,25 @@ def parse_cnv_to_dataset(
     content = source_file.read_text(encoding="utf-8", errors="ignore")
     lines = content.splitlines()
 
-    # Separate header sections
+    # Separate header sections — mirrors MATLAB readSBEcnv.m exactly:
+    #   iStar = strncmp(allLines, '*', 1);
+    #   instHeaderLines = allLines(iStar);
+    #   iHash = strncmp(allLines, '#', 1);
+    #   procHeaderLines = allLines(iHash);
+    #   iData = ~(iStar | iHash);
+    #   dataLines = allLines(iData);
     inst_header_lines: list[str] = []
     proc_header_lines: list[str] = []
-    data_start_idx = 0
+    data_lines: list[str] = []
     
-    for idx, line in enumerate(lines):
+    for line in lines:
         line_stripped = line.strip()
-        
         if line_stripped.startswith("*"):
             inst_header_lines.append(line_stripped)
         elif line_stripped.startswith("#"):
             proc_header_lines.append(line_stripped)
-        elif line_stripped == "*END*":
-            data_start_idx = idx + 1
-            break
+        else:
+            data_lines.append(line_stripped)
 
     # Parse headers
     inst_header = parse_instrument_header(inst_header_lines, mode)
@@ -773,11 +790,11 @@ def parse_cnv_to_dataset(
     if not variable_names:
         raise ValueError(f"No variables found in CNV header: {source_file}")
 
-    # Parse data rows
+    # Parse data rows — mirrors MATLAB: dataLines = strjoin(dataLines, ' ');
+    # dataLines = textscan(dataLines, format);
     data_rows: list[list[float]] = []
-    for line in lines[data_start_idx:]:
-        line_stripped = line.strip()
-        if not line_stripped or line_stripped.startswith("*") or line_stripped.startswith("#"):
+    for line_stripped in data_lines:
+        if not line_stripped:
             continue
         
         try:
@@ -800,10 +817,23 @@ def parse_cnv_to_dataset(
     comment_dict: dict[str, str] = {}
     
     # Determine time offset for TIME variable conversions
-    time_offset = proc_header.get("startTime", 0.0)
-    if time_offset == 0.0 and 'castDate' in inst_header:
+    # Mirrors MATLAB readSBEcnvData.m exactly:
+    #   if isfield(instHeader, 'castDate')
+    #       castDate = instHeader.castDate;
+    #   else
+    #       if isfield(procHeader,'startTime')
+    #           castDate = procHeader.startTime;
+    #       else
+    #           castDate = 0;
+    #       end
+    #   end
+    if 'castDate' in inst_header:
         cast_date = inst_header['castDate']
         time_offset = cast_date[0] if isinstance(cast_date, list) else cast_date
+    elif 'startTime' in proc_header:
+        time_offset = proc_header['startTime']
+    else:
+        time_offset = 0.0
     
     # Convert variables using convert_sbe_var (builds data_dict)
     for idx, raw_name in enumerate(variable_names):
@@ -834,10 +864,11 @@ def parse_cnv_to_dataset(
         comment_dict[final_name] = comment
     
     # Generate TIME if not present
+    # Mirrors MATLAB genTimestamps: checks data.TIME first, then generates
     if 'TIME' not in data_dict:
         # Generate time based on actual data length, not header predictions
         n_actual_samples = len(next(iter(data_dict.values()))) if data_dict else 0
-        time_array = generate_timestamps(inst_header, n_actual_samples)
+        time_array = generate_timestamps(inst_header, n_actual_samples, data_dict=data_dict)
         data_dict['TIME'] = time_array
         comment_dict['TIME'] = 'Generated from header information'
     
@@ -967,27 +998,24 @@ def _build_timeseries_dataset(
     
     dataset.add_variable(
         name='NOMINAL_DEPTH',
-        data=np.float32(np.nan),
+        data=np.float64(np.nan),
         dims=[],
         attrs={'long_name': 'nominal depth', 'units': 'meters', 'positive': 'down'},
     )
     
-    # Add data variables (skip TIME as it's already a dimension)
+    # Add data variables (skip TIME — mirrors MATLAB: strncmp('TIME', vars{k}, 4))
     coordinates = 'TIME LATITUDE LONGITUDE NOMINAL_DEPTH'
     for var_name, var_data in data_dict.items():
-        if var_name == 'TIME':
-            continue  # TIME is already a dimension
+        if var_name[:4] == 'TIME':
+            continue  # Skip any variable starting with 'TIME' (mirrors MATLAB strncmp)
         
         attrs: dict[str, Any] = {'coordinates': coordinates}
         if var_name in comment_dict and comment_dict[var_name]:
             attrs['comment'] = comment_dict[var_name]
         
-        # Add applied_offset for PRES_REL
+        # Add applied_offset for PRES_REL (mirrors MATLAB: -14.7*0.689476)
         if var_name.startswith('PRES_REL'):
             attrs['applied_offset'] = np.float32(-14.7 * 0.689476)
-            if 'comment' not in attrs:
-                attrs['comment'] = ''
-            attrs['comment'] += ' Relative pressure with atmospheric offset of -10.13 dbar applied.'
         
         dataset.add_variable(
             name=var_name,
@@ -1156,7 +1184,8 @@ def _build_profile_dataset(
         for var_name, var_data in data_dict.items():
             if var_name in ['TIME']:
                 continue
-            if var_name == 'DEPTH' and depth_var is not None and n_ascending == 0:
+            # Mirrors MATLAB: if strcmpi('DEPTH', vars{k}) && (nA == 0), continue; end
+            if var_name == 'DEPTH' and n_ascending == 0:
                 continue
             
             attrs = {'coordinates': 'TIME LATITUDE LONGITUDE DEPTH'}
